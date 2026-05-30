@@ -1,6 +1,7 @@
 import { createApp } from '../src/main';
 
-let handler: ((req: unknown, res: unknown) => void) | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let handler: any = null;
 
 export default async function (req: unknown, res: unknown) {
   if (!handler) {
@@ -9,8 +10,7 @@ export default async function (req: unknown, res: unknown) {
       await app.init();
       handler = app.getHttpAdapter().getInstance();
     } catch (e) {
-      console.error('NestJS init failed:', e);
-      (res as { status: (c: number) => { json: (d: unknown) => void } }).status(500).json({ error: 'Init failed' });
+      (res as { status: (c: number) => { json: (d: unknown) => void } }).status(500).json({ error: 'Init failed: ' + String(e) });
       return;
     }
   }
