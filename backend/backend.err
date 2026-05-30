@@ -186,3 +186,24 @@ Error: Cannot find module 'C:\Users\ideapad GAMING\spk_hris\backend\dist\main'
 }
 
 Node.js v26.2.0
+C:\Users\ideapad GAMING\spk_hris\backend\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440
+          throw new PrismaClientInitializationError(error.message, this.config.clientVersion!, error.error_code)
+                ^
+
+PrismaClientInitializationError: Authentication failed against database server, the provided database credentials for `postgres` are not valid.
+
+Please make sure to provide valid database credentials for the database server at the configured address.
+    at r (C:\Users\ideapad GAMING\spk_hris\backend\node_modules\@prisma\client\src\runtime\core\engines\library\LibraryEngine.ts:440:17)
+    at async Proxy.onModuleInit (C:\Users\ideapad GAMING\spk_hris\backend\src\prisma.service.ts:7:5)
+    at async Promise.all (index 0)
+    at async callModuleInitHook (C:\Users\ideapad GAMING\spk_hris\backend\node_modules\@nestjs\core\hooks\on-module-init.hook.js:43:5)
+    at async NestApplication.callInitHook (C:\Users\ideapad GAMING\spk_hris\backend\node_modules\@nestjs\core\nest-application-context.js:234:13)
+    at async NestApplication.init (C:\Users\ideapad GAMING\spk_hris\backend\node_modules\@nestjs\core\nest-application.js:100:9)
+    at async NestApplication.listen (C:\Users\ideapad GAMING\spk_hris\backend\node_modules\@nestjs\core\nest-application.js:170:13)
+    at async bootstrap (C:\Users\ideapad GAMING\spk_hris\backend\src\main.ts:31:3) {
+  clientVersion: '6.19.3',
+  errorCode: 'P1000',
+  retryable: undefined
+}
+
+Node.js v26.2.0
