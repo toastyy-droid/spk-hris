@@ -1,5 +1,5 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-const TIMEOUT_MS = 5000;
+const TIMEOUT_MS = 15000;
 
 interface ApiResponse<T> {
   success: boolean;
