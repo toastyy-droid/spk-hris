@@ -1,12 +1,13 @@
-import serverlessExpress from '@codegenie/serverless-express';
+import type { Request, Response } from 'express';
 import { createApp } from '../src/main';
 
-let cachedServer: ReturnType<typeof serverlessExpress>;
+let app: ReturnType<Express.Application>;
 
-export const handler = async (...args: unknown[]) => {
-  if (!cachedServer) {
-    const app = await createApp();
-    cachedServer = serverlessExpress({ app: app.getHttpAdapter().getInstance() });
+export default async function handler(req: Request, res: Response) {
+  if (!app) {
+    const nestApp = await createApp();
+    await nestApp.init();
+    app = nestApp.getHttpAdapter().getInstance();
   }
-  return cachedServer(args[0], args[1], args[2]);
-};
+  return app(req, res);
+}
