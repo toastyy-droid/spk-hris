@@ -1,13 +1,9 @@
-import type { Request, Response } from 'express';
-import { createApp } from '../src/main';
+import express from 'express';
 
-let app: ReturnType<Express.Application>;
+const app = express();
 
-export default async function handler(req: Request, res: Response) {
-  if (!app) {
-    const nestApp = await createApp();
-    await nestApp.init();
-    app = nestApp.getHttpAdapter().getInstance();
-  }
-  return app(req, res);
-}
+app.all('/api/*', (req, res) => {
+  res.json({ path: req.url, method: req.method, ok: true });
+});
+
+export default app;
