@@ -1,12 +1,16 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { api } from "@/lib/api"
+import { toast } from "sonner"
 import { Plus, Loader2, AlertCircle, RefreshCw, BookOpen, UserCheck } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { canAccess, ROLES } from "@/lib/permissions"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog"
@@ -27,6 +31,15 @@ interface Employee {
 const categoryOptions = ["Teknis", "Non-Teknis", "Sertifikasi", "Bahasa"]
 
 export default function SkillsPage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!authLoading && user && !canAccess(user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN_HR, ROLES.MANAGER])) {
+      router.push("/")
+    }
+  }, [user, authLoading, router])
+
   const [skills, setSkills] = useState<Skill[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
@@ -34,15 +47,19 @@ export default function SkillsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ name: "", category: "", description: "" })
-  const [assignForm, setAssignForm] = useState({ employeeId: "", skillId: "" })
+  const [assignForm, setAssignForm] = useState({ employeeId: "", skillId: "", proficiency: "3" })
   const [assignLoading, setAssignLoading] = useState(false)
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     setError("")
     try {
-      const data = await api.get<Skill[]>("/skills")
-      setSkills(data)
+      const [skillData, empData] = await Promise.all([
+        api.get<Skill[]>("/skills"),
+        api.get<Employee[]>("/employees").catch(() => [] as Employee[]),
+      ])
+      setSkills(skillData)
+      setEmployees(empData)
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal memuat data")
     } finally {
@@ -69,18 +86,10 @@ export default function SkillsPage() {
       setShowCreate(false)
       fetchData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menyimpan")
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan")
     } finally {
       setSaving(false)
     }
-  }
-
-  async function openAssign() {
-    setAssignForm({ employeeId: "", skillId: "" })
-    const [empData] = await Promise.all([
-      api.get<Employee[]>("/employees").catch(() => [] as Employee[]),
-    ])
-    setEmployees(empData)
   }
 
   async function handleAssign(e: React.FormEvent) {
@@ -90,11 +99,12 @@ export default function SkillsPage() {
       await api.post("/skills/assign", {
         employeeId: Number(assignForm.employeeId),
         skillId: Number(assignForm.skillId),
+        proficiency: Number(assignForm.proficiency),
       })
-      setAssignForm({ employeeId: "", skillId: "" })
-      alert("Skill berhasil ditugaskan")
+      setAssignForm({ employeeId: "", skillId: "", proficiency: "3" })
+      toast.success("Skill berhasil ditugaskan")
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menugaskan skill")
+      toast.error(err instanceof Error ? err.message : "Gagal menugaskan skill")
     } finally {
       setAssignLoading(false)
     }
@@ -105,7 +115,6 @@ export default function SkillsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Skills & Kompetensi</h1>
-          <p className="text-muted-foreground">Kelola daftar skill dan penugasan ke karyawan</p>
         </div>
         <Button size="sm" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-1" /> Tambah Skill
@@ -173,10 +182,10 @@ export default function SkillsPage() {
           <form onSubmit={handleAssign} className="flex items-end gap-4">
             <div className="space-y-2 flex-1">
               <Label>Karyawan</Label>
-              <Select value={assignForm.employeeId} onValueChange={(v) => setAssignForm({ ...assignForm, employeeId: v })} required>
+              <Select value={assignForm.employeeId || undefined} onValueChange={(v) => setAssignForm({ ...assignForm, employeeId: v })} required>
                 <SelectTrigger><SelectValue placeholder="Pilih karyawan" /></SelectTrigger>
                 <SelectContent>
-                  {(employees.length > 0 ? employees : []).map((e) => (
+                  {employees.map((e) => (
                     <SelectItem key={e.id} value={String(e.id)}>{e.name}</SelectItem>
                   ))}
                 </SelectContent>
@@ -184,7 +193,7 @@ export default function SkillsPage() {
             </div>
             <div className="space-y-2 flex-1">
               <Label>Skill</Label>
-              <Select value={assignForm.skillId} onValueChange={(v) => setAssignForm({ ...assignForm, skillId: v })} required>
+              <Select value={assignForm.skillId || undefined} onValueChange={(v) => setAssignForm({ ...assignForm, skillId: v })} required>
                 <SelectTrigger><SelectValue placeholder="Pilih skill" /></SelectTrigger>
                 <SelectContent>
                   {skills.map((s) => (
@@ -193,11 +202,19 @@ export default function SkillsPage() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2 w-28">
+              <Label>Proficiency</Label>
+              <Select value={assignForm.proficiency} onValueChange={(v) => setAssignForm({ ...assignForm, proficiency: v })} required>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="pb-0.5">
-              <Button type="button" variant="outline" size="sm" onClick={openAssign} className="mr-2">
-                Muat Data
-              </Button>
-              <Button type="submit" disabled={assignLoading || !assignForm.employeeId || !assignForm.skillId}>
+              <Button type="submit" disabled={assignLoading || !assignForm.employeeId || !assignForm.skillId || !assignForm.proficiency}>
                 {assignLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Assign
               </Button>
@@ -219,7 +236,7 @@ export default function SkillsPage() {
             </div>
             <div className="space-y-2">
               <Label>Kategori</Label>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+              <Select value={form.category || undefined} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue placeholder="Pilih kategori" /></SelectTrigger>
                 <SelectContent>
                   {categoryOptions.map((cat) => (

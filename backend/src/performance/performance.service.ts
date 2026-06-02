@@ -17,7 +17,10 @@ export class PerformanceService {
   }
 
   findOne(id: number) {
-    return this.prisma.performance.findUnique({ where: { id }, include: { employee: true } });
+    return this.prisma.performance.findUnique({
+      where: { id },
+      include: { employee: { select: { id: true, name: true, nik: true, department: true } } },
+    });
   }
 
   async createOrUpdate(data: {

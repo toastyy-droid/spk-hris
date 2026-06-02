@@ -47,6 +47,11 @@ enum PayrollStatus {
   PAID
 }
 
+enum ShippingCoverage {
+  SUPPLIER_COVERS
+  BUYER_COVERS
+}
+
 enum RecruitmentStage {
   SCREENING
   INTERVIEW
@@ -322,6 +327,29 @@ model Recruitment {
   position        Position         @relation(fields: [positionId], references: [id])
 
   @@map("recruitments")
+}
+
+model Supplier {
+  id            Int      @id @default(autoincrement())
+  name          String
+  category      String
+  productBrand  String?
+  contactPerson String?
+  phone         String?
+  address       String?
+  priceScore    Decimal  @db.Decimal(5, 2)
+  qualityScore  Decimal  @db.Decimal(5, 2)
+  deliveryScore Decimal  @db.Decimal(5, 2)
+  serviceScore  Decimal  @db.Decimal(5, 2)
+  capacityScore Decimal  @db.Decimal(5, 2)
+  shippingCoverage ShippingCoverage @default(BUYER_COVERS)
+  totalScore    Decimal? @db.Decimal(5, 2)
+  status        String   @default("ACTIVE")
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("suppliers")
 }
 
 model SpkResult {

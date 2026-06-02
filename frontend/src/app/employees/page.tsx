@@ -13,7 +13,9 @@ import {
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { api } from "@/lib/api"
+import { generateExcel, downloadExcel, excelFilename } from "@/lib/excel"
 import Link from "next/link"
+import { toast } from "sonner"
 import { Plus, Download, Search, Loader2, AlertCircle, RefreshCw, Eye } from "lucide-react"
 
 const statusMap: Record<string, string> = {
@@ -164,7 +166,7 @@ export default function EmployeesPage() {
       setShowCreate(false)
       fetchEmployees()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menyimpan")
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan")
     } finally {
       setSaving(false)
     }
@@ -183,7 +185,7 @@ export default function EmployeesPage() {
       const count: Record<number, number> = {}
       emps.forEach((e) => { if (e.department?.id) count[e.department.id] = (count[e.department.id] ?? 0) + 1 })
       setDeptEmpCount(count)
-    } catch {} finally { setStructureLoading(false) }
+    } catch { } finally { setStructureLoading(false) }
   }
 
   async function loadContractData() {
@@ -196,19 +198,22 @@ export default function EmployeesPage() {
         if (r.status === "fulfilled" && r.value.contractEnd) withContracts.push(r.value)
       })
       setContractEmployees(withContracts)
-    } catch {} finally { setContractLoading(false) }
+    } catch { } finally { setContractLoading(false) }
   }
 
-  function exportCsv() {
-    const header = "NIK,Nama,Email,Telepon,Departemen,Jabatan,Status\n"
-    const rows = employees.map((e) =>
-      `"${e.nik}","${e.name}","${e.email}","${e.phone ?? ""}","${e.department?.name ?? ""}","${e.position?.name ?? ""}","${statusMap[e.status] ?? e.status}"`
-    ).join("\n")
-    const blob = new Blob(["\uFEFF" + header + rows], { type: "text/csv;charset=utf-8;" })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement("a")
-    a.href = url; a.download = "karyawan.csv"; a.click()
-    URL.revokeObjectURL(url)
+  async function exportExcel() {
+    const cols = [
+      { header: "NIK", value: (e: Employee) => e.nik, width: 16 },
+      { header: "Nama", value: (e: Employee) => e.name, width: 22 },
+      { header: "Email", value: (e: Employee) => e.email, width: 28 },
+      { header: "Telepon", value: (e: Employee) => e.phone ?? "", width: 16 },
+      { header: "Departemen", value: (e: Employee) => e.department?.name ?? "", width: 20 },
+      { header: "Jabatan", value: (e: Employee) => e.position?.name ?? "", width: 20 },
+      { header: "Status", value: (e: Employee) => statusMap[e.status] ?? e.status, width: 14 },
+      { header: "Tanggal Masuk", value: (e: Employee) => e.joinDate ? new Date(e.joinDate).toLocaleDateString("id-ID") : "", width: 16 },
+    ]
+    const blob = await generateExcel(employees, cols, "Data Karyawan")
+    downloadExcel(blob, excelFilename("karyawan"))
   }
 
   return (
@@ -216,11 +221,10 @@ export default function EmployeesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Data Karyawan</h1>
-          <p className="text-muted-foreground">Kelola database karyawan CV Anugerah Mega Makmur</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportCsv} disabled={employees.length === 0}>
-            <Download className="h-4 w-4 mr-1" /> Export
+          <Button variant="outline" size="sm" onClick={exportExcel} disabled={employees.length === 0}>
+            <Download className="h-4 w-4 mr-1" /> Export Excel
           </Button>
           <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> Tambah Karyawan</Button>
         </div>
@@ -231,7 +235,6 @@ export default function EmployeesPage() {
           <TabsTrigger value="all">Semua Karyawan</TabsTrigger>
           <TabsTrigger value="structure">Struktur Organisasi</TabsTrigger>
           <TabsTrigger value="contract">Kontrak</TabsTrigger>
-          <TabsTrigger value="documents">Dokumen</TabsTrigger>
         </TabsList>
 
         <TabsContent value="all" className="space-y-4">
@@ -417,25 +420,6 @@ export default function EmployeesPage() {
                   </TableBody>
                 </Table>
               )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="documents">
-          <Card>
-            <CardHeader><CardTitle>Dokumen Digital</CardTitle></CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-12 text-center">
-                <div className="text-3xl mb-2">📄</div>
-                <p className="text-sm font-medium mb-1">Upload Dokumen Karyawan</p>
-                <p className="text-xs text-muted-foreground mb-4">Jenis: KTP, KK, Ijazah, Sertifikat, Kontrak, SK</p>
-                <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-md border border-input bg-background text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors">
-                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onChange={(e) => { if (e.target.files?.length) alert(`File "${e.target.files[0].name}" siap diupload. Implementasi backend menyusul.`) }} />
-                  Pilih File
-                </label>
-              </div>
-              <div className="text-sm text-muted-foreground text-center italic">
-                Fitur upload & penyimpanan dokumen akan terintegrasi dengan backend document management
-              </div>
             </CardContent>
           </Card>
         </TabsContent>

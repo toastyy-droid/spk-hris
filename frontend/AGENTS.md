@@ -1,4 +1,4 @@
-# AGENTS.md — HRIS AMM Frontend
+# AGENTS.md — Supplier SPK Frontend
 
 ## Stack
 - Next.js 14 App Router (TypeScript strict)
@@ -27,8 +27,11 @@ No typecheck, test, or codegen scripts exist.
 - **App Router** — all pages under `src/app/<route>/page.tsx`
 - **All pages are `"use client"`** — no RSC or server actions yet
 - **Layout** (`layout.tsx`): `<Sidebar>` + `<Header>` wrapper with `h-screen` flex; `<main>` uses `bg-muted/30`
-- **Routes**: `/` (Dashboard), `/employees`, `/payroll`, `/attendance`, `/performance`, `/recruitment`, `/training`, `/spk`, `/settings`
+- **Active routes**: `/` (Dashboard), `/suppliers`, `/spk`, `/criteria`
+- **Legacy HRIS routes** (tidak aktif di sidebar): `/employees`, `/attendance`, `/performance`, `/positions`, `/departments`, `/skills`
 - **Components**: `src/components/ui/` (16 shadcn-style primitives), `src/components/` (sidebar, header, charts/)
+- **Excel export**: `exceljs` is installed, shared utility at `src/lib/excel.ts` — `generateExcel()`, `downloadExcel()`, `excelFilename()`. Outputs styled `.xlsx` (teal header, zebra stripes, borders, auto-filter, frozen header row)
+- **CSV**: `src/lib/csv.ts` also exists for simple text-based exports
 - **Charts**: `recharts` is installed but `src/components/charts/` is empty — no chart components built yet
 - **Language**: Indonesian (UI labels, nav items)
 

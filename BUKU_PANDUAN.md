@@ -1,794 +1,412 @@
-# 📘 HRIS AMM
-## Buku Panduan Sistem Informasi Sumber Daya Manusia
-### CV Anugerah Mega Makmur
+# Buku Panduan Pengguna HRIS AMM
 
-**Versi 1.0 — 31 Mei 2026**
+**Sistem Informasi Sumber Daya Manusia Terintegrasi CV Anugerah Mega Makmur**
 
 ---
 
-## Daftar Isi
+## 📌 Daftar Isi
 
-1. [Apa Itu HRIS AMM?](#1-apa-itu-hris-amm)
-2. [Cara Mengakses Aplikasi](#2-cara-mengakses-aplikasi)
-3. [Login dan Akun](#3-login-dan-akun)
-4. [Navigasi Dashboard](#4-navigasi-dashboard)
-5. [Panduan Fitur Lengkap](#5-panduan-fitur-lengkap)
-   - [5.1 Dashboard Utama](#51-dashboard-utama)
-   - [5.2 Data Karyawan](#52-data-karyawan)
-   - [5.3 Payroll (Penggajian)](#53-payroll-penggajian)
-   - [5.4 Absensi](#54-absensi)
-   - [5.5 Kinerja (KPI & 360°)](#55-kinerja-kpi--360)
-   - [5.6 Rekrutmen](#56-rekrutmen)
-   - [5.7 Training & Skill Matrix](#57-training--skill-matrix)
-   - [5.8 SPK (Sistem Pendukung Keputusan)](#58-spk-sistem-pendukung-keputusan)
-   - [5.9 Manajemen Departemen](#59-manajemen-departemen)
-   - [5.10 Manajemen Jabatan](#510-manajemen-jabatan)
-   - [5.11 Manajemen Skills](#511-manajemen-skills)
-   - [5.12 Manajemen Users](#512-manajemen-users)
-   - [5.13 Settings](#513-settings)
-6. [Arsitektur Sistem](#6-arsitektur-sistem)
-7. [Teknologi yang Digunakan](#7-teknologi-yang-digunakan)
-8. [Untuk Pengembang (Developer)](#8-untuk-pengembang-developer)
-9. [Pemecahan Masalah (Troubleshooting)](#9-pemecahan-masalah-troubleshooting)
-10. [Glosarium](#10-glosarium)
+1. [Tentang Sistem](#1-tentang-sistem)
+2. [Persyaratan Sistem & Instalasi](#2-persyaratan-sistem--instalasi)
+3. [Cara Menjalankan Aplikasi](#3-cara-menjalankan-aplikasi)
+4. [Login & Akun Demo](#4-login--akun-demo)
+5. [Dashboard](#5-dashboard)
+6. [Manajemen Karyawan](#6-manajemen-karyawan)
+7. [Absensi & Time Management](#7-absensi--time-management)
+8. [Penilaian Kinerja](#8-penilaian-kinerja)
+9. [Skills & Kompetensi](#9-skills--kompetensi)
+10. [SPK Dashboard](#10-spk-dashboard)
+11. [Departemen & Jabatan](#11-departemen--jabatan)
+12. [Reset Data (Seed)](#12-reset-data-seed)
+13. [Struktur Folder](#13-struktur-folder)
 
 ---
 
-## 1. Apa Itu HRIS AMM?
+## 1. Tentang Sistem
 
-**HRIS AMM** (Human Resource Information System — CV Anugerah Mega Makmur) adalah sistem informasi sumber daya manusia berbasis web yang dibangun untuk mengelola seluruh aspek kepegawaian secara digital.
+HRIS AMM adalah sistem informasi sumber daya manusia terintegrasi yang dibangun khusus untuk CV Anugerah Mega Makmur. Sistem ini mencakup:
 
-### Apa yang bisa dilakukan HRIS AMM?
+- **Manajemen Data Karyawan** — Data master karyawan, dokumen, kontrak
+- **Absensi & Time Management** — Check-in/out, cuti, izin
+- **Penilaian Kinerja** — KPI, self review, 360° review
+- **Skills & Kompetensi** — Matrix keahlian karyawan
+- **SPK Dashboard** — Sistem Penunjang Keputusan untuk promosi & early warning
+- **Manajemen Departemen & Jabatan** — Struktur organisasi
 
-| Modul | Fungsi |
-|---|---|
-| **Data Karyawan** | Menyimpan data lengkap karyawan, kontrak, dokumen, struktur organisasi |
-| **Payroll** | Menghitung gaji, tunjangan, potongan, dan menghasilkan slip gaji |
-| **Absensi** | Mencatat kehadiran, check-in/out, cuti, izin, lembur |
-| **Kinerja** | Penilaian KPI, review 360°, catatan kinerja |
-| **Rekrutmen** | Mengelola lowongan kerja, pipeline kandidat |
-| **Training** | Daftar pelatihan, riwayat pelatihan per karyawan |
-| **Skill Matrix** | Skills yang dimiliki karyawan, mapping kompetensi |
-| **SPK** | Sistem Pendukung Keputusan untuk promosi jabatan (metode SMART) |
-| **Manajemen** | Departemen, jabatan, users, dan konfigurasi sistem |
+**Teknologi yang Digunakan:**
 
-### Kenapa dibangun?
-
-Proyek ini dibangun sebagai tugas kelompok dan sekaligus solusi nyata untuk mengelola SDM perusahaan secara digital, menggantikan pencatatan manual menggunakan Excel/kertas.
-
----
-
-## 2. Cara Mengakses Aplikasi
-
-### 2.1 Langsung dari Browser
-
-Aplikasi sudah **live** dan bisa diakses dari mana saja:
-
-| Komponen | URL |
-|---|---|
-| **Frontend (Website)** | [https://hris-amm-frontend.vercel.app](https://hris-amm-frontend.vercel.app) |
-| **Backend (API)** | [https://hris-amm-api.vercel.app/api](https://hris-amm-api.vercel.app/api) |
-| **Dokumentasi API (Swagger)** | [https://hris-amm-api.vercel.app/api/docs](https://hris-amm-api.vercel.app/api/docs) |
-
-### 2.2 Buka di HP
-
-Website ini **responsive** — bisa dibuka di HP, tablet, atau laptop.
-
-### 2.3 Tidak perlu install apa-apa
-
-Cukup buka browser (Chrome, Edge, Firefox, Safari) dan ketik URL di atas.
-
-### ⚠️ Catatan Penting: Cold Start
-
-Karena aplikasi berjalan di server gratis (Vercel), server akan "tidur" jika tidak dipakai selama ~15 menit.
-
-- **Akses pertama kali** setelah lama idle akan lambat (5-10 detik)
-- **Tunggu saja**, jangan refresh berulang kali
-- Setelah loading pertama selesai, halaman akan berjalan normal
+| Komponen | Teknologi |
+|----------|-----------|
+| Frontend | Next.js 14 (App Router) + Tailwind CSS + shadcn/ui |
+| Backend | NestJS + Prisma ORM |
+| Database | PostgreSQL (via Supabase) |
+| Autentikasi | JWT (passport-jwt) |
+| Role Access | RBAC (SUPER_ADMIN, ADMIN_HR, MANAGER, KARYAWAN) |
 
 ---
 
-## 3. Login dan Akun
+## 2. Persyaratan Sistem & Instalasi
 
-### 3.1 Cara Login
+### Prasyarat
 
-1. Buka [https://hris-amm-frontend.vercel.app](https://hris-amm-frontend.vercel.app)
-2. Anda akan melihat halaman login
-3. Masukkan **Username** dan **Password**
-4. Klik tombol **"Masuk"**
+- **Node.js** versi 18+ (disarankan 20 LTS)
+- **NPM** atau **Yarn**
+- Koneksi internet (database menggunakan Supabase cloud)
 
-### 3.2 Akun yang Tersedia
-
-| Username | Password | Role | Akses |
-|---|---|---|---|
-| `admin` | `admin123` | SUPER_ADMIN | Semua fitur |
-| *(Akun lain bisa dibuat dari menu Users)* | | | |
-
-### 3.3 Setelah Login
-
-Setelah berhasil login, Anda akan masuk ke **Dashboard** utama.
-
-### 3.4 Logout
-
-Klik foto/avatar di pojok kanan atas → pilih **Keluar**.
-
----
-
-## 4. Navigasi Dashboard
-
-### 4.1 Layout Halaman
-
-```
-┌─────────────────────────────────────────────┐
-│  Header: Logo + Pencarian + Profil          │
-├──────────┬──────────────────────────────────┤
-│          │                                  │
-│ Sidebar  │     Area Konten Utama            │
-│ (Menu)   │                                  │
-│          │                                  │
-│          │                                  │
-├──────────┴──────────────────────────────────┤
-│  Footer (jarang dipakai)                    │
-└─────────────────────────────────────────────┘
-```
-
-### 4.2 Menu Sidebar (Kiri)
-
-| Ikon | Menu | Keterangan |
-|---|---|---|
-| 📊 | Dashboard | Ringkasan statistik utama |
-| 👥 | Data Karyawan | Manajemen data pegawai |
-| 💰 | Payroll | Penggajian dan slip gaji |
-| 📋 | Absensi | Kehadiran, cuti, izin |
-| ⭐ | Kinerja | KPI dan 360° review |
-| 🔍 | Rekrutmen | ATS dan pipeline kandidat |
-| 🎓 | Training | Pelatihan dan skill matrix |
-| 🤖 | SPK | Sistem Pendukung Keputusan |
-| 🏢 | Departemen | Manajemen departemen |
-| 💼 | Jabatan | Manajemen posisi/jabatan |
-| 🛠️ | Skills | Daftar skill dan mapping |
-| 👤 | Users | Manajemen akun pengguna |
-| ⚙️ | Settings | Konfigurasi perusahaan |
-
-### 4.3 Pencarian
-
-Di header atas ada kolom **search** — bisa untuk mencari karyawan cepat.
-
----
-
-## 5. Panduan Fitur Lengkap
-
-### 5.1 Dashboard Utama
-
-Halaman pertama setelah login. Menampilkan:
-
-- **Total Karyawan** → jumlah seluruh pegawai
-- **Karyawan Aktif** → yang masih bekerja
-- **Absensi Hari Ini** → siapa yang sudah check-in
-- **Kontrak Akan Habis** → peringatan 30 hari ke depan
-- **Grafik** → tren jumlah karyawan (recharts)
-- **Ringkasan SPK** → rekomendasi promosi terbaru
-
-👉 Tidak ada tombol khusus — semua data tampil otomatis.
-
----
-
-### 5.2 Data Karyawan
-
-**Menu:** Sidebar → Data Karyawan
-
-#### Cara Melihat Daftar Karyawan
-1. Klik menu **Data Karyawan** di sidebar
-2. Tabel menampilkan semua karyawan
-3. Ada kolom pencarian dan filter departemen
-
-#### Data yang Ditampilkan di Tabel
-- NIK, Nama, Departemen, Jabatan, Status, Tanggal Masuk
-
-#### Tombol Aksi
-- **Detail** → Lihat halaman lengkap karyawan
-- **Edit** → (jika punya akses) ubah data
-- **Export CSV** → Download data ke Excel
-
-#### Halaman Detail Karyawan
-Klik **Detail** atau nama karyawan → masuk ke halaman profil lengkap:
-
-| Tab | Isi |
-|---|---|
-| **Informasi Umum** | Data pribadi, kontak, alamat |
-| **Struktur Organisasi** | Posisi di bagan organisasi |
-| **Kontrak** | Riwayat kontrak, status, tanggal habis |
-| **Dokumen** | File-file terkait (KTP, ijazah, dll) |
-| **KPI** | Target KPI & pencapaian |
-| **360 Feedback** | Review dari atasan/rekan/bawahan |
-| **Catatan Kinerja** | Log catatan performa |
-
----
-
-### 5.3 Payroll (Penggajian)
-
-**Menu:** Sidebar → Payroll
-
-#### Cara Memproses Gaji Bulanan
-1. Pilih **Bulan** dan **Tahun**
-2. Klik tombol **"Proses Gaji"**
-3. Sistem menghitung gaji semua karyawan secara otomatis
-4. Data muncul di tabel
-
-#### Melihat Slip Gaji
-- Klik **ID Payroll** atau tombol **Slip** di tabel
-- Halaman detail menampilkan slip gaji lengkap:
-  - Gaji Pokok
-  - Tunjangan (makan, transport, jabatan, dll)
-  - Potongan (BPJS, PPh, pinjaman, dll)
-  - Total Take Home Pay
-
-#### Tab Komponen Gaji
-- **Tunjangan Tetap** → diatur di level jabatan
-- **Potongan Tetap** → diatur sistem
-
-#### Tab Histori Gaji
-- Rekap gaji tahunan per karyawan
-- Bisa lihat tren kenaikan gaji
-
-#### Tombol Export
-- Download data payroll dalam format CSV
-
----
-
-### 5.4 Absensi
-
-**Menu:** Sidebar → Absensi
-
-#### Fitur Check-in / Check-out
-1. Klik tombol **"Check In"** untuk mencatat kedatangan
-2. Sistem mencatat waktu otomatis
-3. Klik **"Check Out"** saat pulang
-
-#### Riwayat Absensi
-- Tabel menampilkan kehadiran harian
-- Status: Hadir, Terlambat, Izin, Sakit, Alpha
-
-#### Rekap Bulanan
-- Ringkasan kehadiran per bulan
-- Jumlah hadir, sakit, izin, cuti
-
-#### Tab Cuti & Izin (Leaves)
-- **Ajukan Cuti** → Pilih jenis, tanggal, alasan
-- **Approval** → Atasan bisa menyetujui/menolak
-- **Sisa Kuota** → Menampilkan jatah cuti tahunan
-
-#### Tab Lembur
-- Catatan lembur karyawan
-- Perhitungan upah lembur
-
----
-
-### 5.5 Kinerja (KPI & 360°)
-
-**Menu:** Sidebar → Kinerja
-
-#### Daftar Penilaian
-- Tabel periode penilaian kinerja
-- Klik **Detail** untuk lihat lengkap
-
-#### Tab KPI Setting
-- Atur **KPI (Key Performance Indicator)** per jabatan
-- Tentukan target dan bobot penilaian
-
-#### Tab 360 Feedback
-- Review dari berbagai sudut pandang:
-  - Atasan (30%)
-  - Rekan kerja (30%)
-  - Bawahan (20%)
-  - Diri sendiri (20%)
-- Memberikan gambaran objektif
-
-#### Tab Catatan Kinerja
-- Catatan harian/mingguan tentang performa
-- Bisa ditambahkan oleh atasan
-
----
-
-### 5.6 Rekrutmen
-
-**Menu:** Sidebar → Rekrutmen
-
-#### Melihat Lowongan
-- Daftar posisi yang sedang dibuka
-- Status: Open, Closed, On Hold
-
-#### Pipeline Kandidat
-Visual pipeline tahapan rekrutmen:
-
-```
-Applied → Screening → Interview → Offer → Hired
-```
-
-- **Seret (drag)** kandidat ke tahap berikutnya
-- Klik kandidat untuk lihat detail
-
-#### Menambah Kandidat
-1. Klik tombol **Tambah Kandidat**
-2. Isi nama, posisi, kontak, CV
-3. Kandidat otomatis masuk tahap "Applied"
-
-#### Portal Karir
-- Halaman publik untuk pelamar luar
-- Bisa melihat lowongan yang tersedia
-
----
-
-### 5.7 Training & Skill Matrix
-
-**Menu:** Sidebar → Training
-
-#### Daftar Pelatihan
-- Tabel semua program pelatihan
-- Nama, tanggal, durasi, peserta
-
-#### Menambah Pelatihan
-1. Klik **Tambah Pelatihan**
-2. Isi judul, deskripsi, tanggal, peserta
-3. Simpan
-
-#### Tab Riwayat Pelatihan
-- Pelatihan yang pernah diikuti per karyawan
-- Sertifikat dan nilai
-
-#### Tab Skill Matrix
-- Matriks kompetensi karyawan
-- Skill apa saja yang dimiliki tiap karyawan
-- Level: Beginner, Intermediate, Advanced, Expert
-- Bisa melihat **gap** skill untuk kebutuhan training
-
----
-
-### 5.8 SPK (Sistem Pendukung Keputusan)
-
-**Menu:** Sidebar → SPK
-
-**Ini adalah fitur canggih** untuk membantu keputusan promosi jabatan secara objektif.
-
-#### Cara Kerja SPK (Metode SMART)
-Sistem menilai karyawan berdasarkan **5 kriteria**:
-
-| Kriteria | Bobot | Sumber Data |
-|---|---|---|
-| Performa Kinerja | 40% | Modul Kinerja |
-| Masa Kerja (Tenure) | 20% | Data karyawan |
-| Kesesuaian Skill | 20% | Skill Matrix |
-| Disiplin | 10% | Data absensi |
-| 360 Review | 10% | Modul Kinerja |
-
-#### Menjalankan SPK
-1. Buka menu **SPK**
-2. Klik **"Jalankan SPK Promosi"**
-3. Sistem menghitung skor otomatis
-4. Hasil menampilkan peringkat karyawan terbaik untuk promosi
-
-#### Halaman Detail Hasil SPK
-- Skor per kriteria (visual chart)
-- Total skor akhir
-- Rekomendasi: **Direkomendasikan** / **Tidak**
-
-#### Early Warning
-- Peringatan dini untuk karyawan dengan performa menurun
-- Membantu intervensi sebelum masalah membesar
-
----
-
-### 5.9 Manajemen Departemen
-
-**Menu:** Sidebar → Departemen
-
-#### Melihat Departemen
-- Tabel daftar departemen
-- Nama, deskripsi, jumlah anggota
-
-#### Menambah / Edit Departemen
-1. Klik **Tambah Departemen**
-2. Isi nama, deskripsi, parent departemen (jika ada)
-3. Simpan
-
-#### Struktur Organisasi
-- Visual tree: bagaimana hierarki departemen
-
----
-
-### 5.10 Manajemen Jabatan
-
-**Menu:** Sidebar → Jabatan
-
-#### Melihat Jabatan
-- Tabel daftar posisi
-- Nama jabatan, departemen, level, deskripsi
-
-#### Menambah / Edit Jabatan
-1. Klik **Tambah Jabatan**
-2. Pilih departemen, isi nama jabatan, level
-3. Simpan
-
-#### Filter
-- Filter jabatan berdasarkan departemen
-
----
-
-### 5.11 Manajemen Skills
-
-**Menu:** Sidebar → Skills
-
-#### Melihat Skills
-- Daftar semua skill yang terdaftar
-- Nama skill, kategori
-
-#### Menambah Skill
-1. Klik **Tambah Skill**
-2. Isi nama skill, kategori (Teknis, Non-Teknis, Sertifikasi)
-3. Simpan
-
-#### Assign Skill ke Karyawan
-1. Klik **Assign**
-2. Pilih karyawan dan level skill
-3. Simpan → otomatis masuk ke Skill Matrix
-
----
-
-### 5.12 Manajemen Users
-
-**Menu:** Sidebar → Users
-
-**Khusus untuk SUPER_ADMIN dan ADMIN_HR**
-
-#### Melihat Users
-- Daftar semua akun pengguna sistem
-- Username, email, role, status aktif
-
-#### Role (Hak Akses)
-
-| Role | Akses |
-|---|---|
-| **SUPER_ADMIN** | Semua fitur, termasuk manajemen user |
-| **ADMIN_HR** | Semua fitur HR, tidak bisa管理 user |
-| **MANAGER** | Data tim sendiri, approve cuti/izin |
-| **KARYAWAN** | Data diri sendiri, absensi, pengajuan cuti |
-
-#### Menambah / Edit User
-1. Klik **Tambah User**
-2. Isi username, password, pilih role
-3. Simpan
-
-#### Reset Password
-- Atur ulang password jika user lupa
-
----
-
-### 5.13 Settings
-
-**Menu:** Sidebar → Settings
-
-- Nama perusahaan
-- Alamat
-- Nomor telepon
-- Email
-- Logo perusahaan
-
-Semua data ini muncul di laporan dan slip gaji.
-
----
-
-## 6. Arsitektur Sistem
-
-### 6.1 Diagram Alur Sederhana
-
-```
-Anda (Browser)          Server Cloud          Database Cloud
-     │                       │                     │
-     │── Buka website ──────>│                     │
-     │                       │                     │
-     │<── Halaman Login ─────│                     │
-     │                       │                     │
-     │── Login ─────────────>│── Cek user ────────>│
-     │   (user/pass)         │                     │
-     │                       │<── Data user ───────│
-     │                       │                     │
-     │<── Token JWT ─────────│                     │
-     │                       │                     │
-     │── Minta data ────────>│── Query data ──────>│
-     │   (dengan token)      │                     │
-     │                       │<── Hasil data ──────│
-     │<── Tampilkan data ────│                     │
-```
-
-### 6.2 Tiga Layer Utama
-
-```
-┌──────────────────────────────────┐
-│   FRONTEND (Layer Tampilan)      │
-│   Next.js 14 + React            │
-│   https://hris-amm-frontend...   │
-├──────────────────────────────────┤
-│   BACKEND (Layer Logika Bisnis)   │
-│   NestJS + Prisma ORM           │
-│   https://hris-amm-api.vercel…   │
-├──────────────────────────────────┤
-│   DATABASE (Layer Penyimpanan)   │
-│   PostgreSQL (Supabase)         │
-└──────────────────────────────────┘
-```
-
-### 6.3 Penjelasan
-
-1. **Frontend (Next.js)**
-   - Tampilan web yang Anda lihat
-   - Berisi halaman, tombol, tabel, grafik
-   - "Bicara" ke backend via API
-
-2. **Backend (NestJS)**
-   - Otak aplikasi — semua logika bisnis
-   - Menghitung gaji, SPK, validasi login
-   - Terima permintaan dari frontend, olah data, kirim hasil
-
-3. **Database (PostgreSQL)**
-   - Penyimpanan data permanen
-   - Semua data karyawan, absensi, payroll, dll
-   - Di-host di Supabase (cloud)
-
-### 6.4 Hosting (Jangan Khawatir — Gratis!)
-
-Semua berjalan di cloud gratis:
-
-| Layanan | Fungsi | Biaya |
-|---|---|---|
-| **Vercel** | Host frontend + backend | Gratis |
-| **Supabase** | Database PostgreSQL | Gratis |
-| **GitHub** | Source code | Gratis |
-
-Tidak perlu bayar server, domain, atau hosting.
-
----
-
-## 7. Teknologi yang Digunakan
-
-### Frontend
-
-| Teknologi | Kegunaan |
-|---|---|
-| **Next.js 14** | Framework React untuk web app |
-| **TypeScript** | JavaScript dengan tipe data |
-| **Tailwind CSS** | Framework CSS cepat |
-| **shadcn/ui** | Komponen UI siap pakai |
-| **Recharts** | Grafik dan chart |
-| **Lucide Icons** | Ikon-ikon cantik |
-
-### Backend
-
-| Teknologi | Kegunaan |
-|---|---|
-| **NestJS** | Framework Node.js terstruktur |
-| **Prisma ORM** | Penghubung ke database |
-| **PostgreSQL** | Database relasional |
-| **JWT (JSON Web Token)** | Sistem keamanan login |
-| **Passport.js** | Autentikasi |
-| **Swagger** | Dokumentasi API otomatis |
-
-### Tools
-
-| Tools | Kegunaan |
-|---|---|
-| **Git** | Version control |
-| **GitHub** | Tempat nyimpan code |
-| **VS Code** | Editor code (disarankan) |
-| **Vercel CLI** | Deploy ke production |
-
----
-
-## 8. Untuk Pengembang (Developer)
-
-Bagian ini untuk anggota kelompok yang ingin **mengedit code** atau **menjalankan di laptop**.
-
-### 8.1 Persiapan Awal
-
-#### Yang perlu diinstall:
-1. **Node.js** (versi 18 atau 20) → [nodejs.org](https://nodejs.org)
-2. **Git** → [git-scm.com](https://git-scm.com)
-3. **VS Code** → [code.visualstudio.com](https://code.visualstudio.com)
-
-#### Clone project:
-```bash
-git clone https://github.com/toastyy-droid/spk-hris.git
-cd spk-hris
-```
-
-### 8.2 Struktur Folder
-
-```
-spk_hris/
-├── frontend/           # Aplikasi web (Next.js)
-│   ├── src/
-│   │   ├── app/        # Halaman-halaman
-│   │   │   ├── login/     # Halaman login
-│   │   │   ├── employees/ # Data karyawan
-│   │   │   ├── payroll/   # Penggajian
-│   │   │   ├── attendance/ # Absensi
-│   │   │   ├── performance/ # Kinerja
-│   │   │   ├── recruitment/ # Rekrutmen
-│   │   │   ├── training/   # Training
-│   │   │   ├── spk/        # SPK
-│   │   │   ├── departments/# Departemen
-│   │   │   ├── positions/  # Jabatan
-│   │   │   ├── skills/     # Skills
-│   │   │   ├── users/      # Users
-│   │   │   └── settings/   # Settings
-│   │   ├── components/  # Komponen reusable
-│   │   ├── contexts/    # State management
-│   │   └── lib/         # Utility & API client
-│   ├── public/          # Gambar, icon
-│   └── package.json
-│
-├── backend/            # API server (NestJS)
-│   ├── src/
-│   │   ├── modules/    # Modul-modul
-│   │   │   ├── auth/       # Autentikasi
-│   │   │   ├── users/      # Users
-│   │   │   ├── employees/  # Karyawan
-│   │   │   ├── departments/# Departemen
-│   │   │   ├── positions/  # Jabatan
-│   │   │   ├── attendance/ # Absensi
-│   │   │   ├── leaves/     # Cuti
-│   │   │   ├── payroll/    # Penggajian
-│   │   │   ├── performance/# Kinerja
-│   │   │   ├── training/   # Training
-│   │   │   ├── skills/     # Skills
-│   │   │   ├── recruitment/# Rekrutmen
-│   │   │   └── spk/        # SPK
-│   │   ├── common/     # Shared (guards, decorators)
-│   │   └── main.ts     # Entry point
-│   ├── prisma/
-│   │   └── schema.prisma  # Model database
-│   └── package.json
-│
-├── prd.md              # Dokumen requirement (PRD)
-└── BUKU_PANDUAN.md     # Buku panduan ini
-```
-
-### 8.3 Menjalankan Frontend di Laptop
+### Langkah Instalasi
 
 ```bash
-cd frontend
+# Clone repositori
+git clone <repository-url>
+cd spk_hris
+
+# Install semua dependensi (root, backend, frontend)
+cd backend
 npm install
-npm run dev
+cd ../frontend
+npm install
+cd ..
+npm install
 ```
 
-Buka browser: `http://localhost:3000`
+### Konfigurasi Database
 
-### 8.4 Menjalankan Backend di Laptop
+Database sudah terhubung ke Supabase PostgreSQL cloud. Konfigurasi ada di file:
+
+```
+backend/.env  →  DATABASE_URL
+```
+
+Jika ingin menggunakan database lokal, ubah `DATABASE_URL` di `.env`:
+
+```
+DATABASE_URL="postgresql://user:password@localhost:5432/hris_amm"
+```
+
+### Migrasi Database
 
 ```bash
 cd backend
-npm install
-npm run prisma:generate
+npx prisma migrate dev --name init
+npx prisma generate
+```
+
+---
+
+## 3. Cara Menjalankan Aplikasi
+
+### Cara 1: Double-click (Paling Mudah)
+
+Double-click file **`dev.bat`** yang ada di folder utama (`C:\Users\ideapad GAMING\spk_hris\dev.bat`).
+
+### Cara 2: Terminal (Satu Perintah)
+
+```bash
+cd C:\Users\ideapad GAMING\spk_hris
 npm run dev
 ```
 
-Backend jalan di: `http://localhost:4000/api`
+### Cara 3: Manual (Terpisah)
 
-### 8.5 Deploy (Untuk yang Sudah Punya Akses)
+```bash
+# Terminal 1 - Backend (port 4000)
+cd backend
+npm run dev
 
-Frontend & Backend sudah auto-deploy dari GitHub:
-1. Edit code → commit → push ke `main`
-2. Vercel otomatis build & deploy ulang
-3. Tunggu ~1-2 menit
+# Terminal 2 - Frontend (port 3000)
+cd frontend
+npm run dev
+```
 
-### 8.6 Perintah Penting
-
-#### Frontend:
-| Perintah | Fungsi |
-|---|---|
-| `npm run dev` | Menjalankan di laptop (development) |
-| `npm run build` | Build untuk production |
-| `npm run lint` | Cek kode dari error |
-
-#### Backend:
-| Perintah | Fungsi |
-|---|---|
-| `npm run dev` | Menjalankan API di laptop |
-| `npm run build` | Compile ke JavaScript |
-| `npm run lint` | Cek kode dari error |
-| `npm run prisma:studio` | Buka database UI (Prisma Studio) |
+Setelah berjalan, buka browser ke: **http://localhost:3000**
 
 ---
 
-## 9. Pemecahan Masalah (Troubleshooting)
+## 4. Login & Akun Demo
 
-### 9.1 Login Tidak Berhasil
+### Akun Super Admin
 
-| Masalah | Solusi |
-|---|---|
-| **"Login gagal"** | Cek username & password (case-sensitive) |
-| **Tidak terjadi apa-apa** | Tunggu 10 detik (cold start), jangan klik berulang |
-| **Error di console** | Buka F12 → Console, laporkan ke tim |
+| Username | Password | Role |
+|----------|----------|------|
+| `admin` | `admin123` | SUPER_ADMIN |
 
-### 9.2 Halaman Kosong / Data Tidak Muncul
+### Akun Karyawan (Login menggunakan NIK)
 
-| Masalah | Solusi |
-|---|---|
-| **Loading terus** | Refresh halaman sekali |
-| **Data tidak tampil** | Tunggu 5 detik, refresh |
-| **Error 500** | Backend cold start — reload aja |
-
-### 9.3 Aplikasi Lambat
-
-| Penyebab | Solusi |
-|---|---|
-| Cold start server | Tunggu 5-10 detik, itu normal |
-| Koneksi internet | Cek koneksi Anda |
-| Server sibuk | Coba beberapa menit lagi |
-
-### 9.4 Lupa Password
-
-Hubungi **SUPER_ADMIN** (yang punya akses menu Users) untuk reset password.
-
-### 9.5 Error Saat Development
-
-| Error | Solusi |
-|---|---|
-| `npm install` error | Coba hapus `node_modules` lalu install ulang |
-| `port 3000 already in use` | Matikan aplikasi lain yang pakai port 3000 |
-| `PrismaClientInitializationError` | Pastikan database sedang jalan |
+| NIK | Nama | Password | Role |
+|-----|------|----------|------|
+| `19800101` | Admin HR | `admin123` | ADMIN_HR |
+| `19900101` | Budi Santoso | `admin123` | KARYAWAN |
+| `19910202` | Siti Rahmawati | `admin123` | KARYAWAN |
+| `19920303` | Ahmad Hidayat | `admin123` | KARYAWAN |
+| `19930404` | Dewi Lestari | `admin123` | KARYAWAN |
+| `19940505` | Rudi Hartono | `admin123` | KARYAWAN |
+| `19950606` | Maya Anggraini | `admin123` | KARYAWAN |
+| `19960707` | Dimas Pratama | `admin123` | KARYAWAN |
+| `19970808` | Fitri Handayani | `admin123` | KARYAWAN |
+| `19980909` | Agus Wijaya | `admin123` | KARYAWAN |
+| `19991010` | Rina Amelia | `admin123` | KARYAWAN |
+| `20001111` | Hendra Gunawan | `admin123` | KARYAWAN |
+| `20011212` | Sarah Mutiara | `admin123` | KARYAWAN |
+| `19930001` | Manager HR | `admin123` | MANAGER |
 
 ---
 
-## 10. Glosarium
+## 5. Dashboard
 
-| Istilah | Arti |
-|---|---|
-| **API** | Jembatan antara frontend dan backend |
-| **ATS** | Applicant Tracking System — sistem pelacak pelamar |
-| **Cold Start** | Waktu tunggu pertama kali server dihidupkan |
-| **CORS** | Pengaman agar hanya domain tertentu bisa akses API |
-| **CRUD** | Create, Read, Update, Delete — operasi dasar data |
-| **Deploy** | Proses menaikkan aplikasi ke server online |
-| **Endpoint** | URL spesifik di API (contoh: `/api/auth/login`) |
-| **JWT** | Token keamanan untuk login |
-| **KPI** | Key Performance Indicator — target kinerja |
-| **Kriteria** | Faktor penilaian dalam SPK |
-| **Middleware** | Pengecek izin sebelum halaman diakses |
-| **NestJS** | Framework backend yang digunakan |
-| **Next.js** | Framework frontend yang digunakan |
-| **ORM** | Penghubung antara code dan database |
-| **Pipeline** | Alur tahapan rekrutmen |
-| **Prisma** | ORM yang dipakai di project ini |
-| **PRD** | Product Requirements Document — dokumen spesifikasi |
-| **Responsive** | Tampilan yang menyesuaikan ukuran layar |
-| **Role** | Hak akses pengguna (Super Admin, HR, Manager, Karyawan) |
-| **SMART** | Metode SPK: Simple Multi-Attribute Rating Technique |
-| **SPK** | Sistem Pendukung Keputusan |
-| **Supabase** | Penyedia database PostgreSQL gratis |
-| **Swagger** | Dokumentasi API interaktif |
-| **Token** | Kode rahasia untuk akses API |
-| **Vercel** | Platform hosting gratis untuk frontend & backend |
-| **360° Review** | Penilaian dari atasan, rekan, bawahan, dan diri sendiri |
+Halaman pertama setelah login. Dashboard menampilkan:
+
+**Ringkasan Statistik:**
+- Total Karyawan (dan jumlah aktif)
+- Kehadiran Hari Ini (jumlah & persentase)
+- Cuti Hari Ini (plus jumlah izin/sakit)
+
+**Distribusi Karyawan per Departemen:**
+- Grafik batang horizontal per departemen
+
+**Alert System:**
+- Kontrak habis < 60 hari
+- Kinerja menurun 3 bulan
+- Absensi anomali
+- Karyawan belum naik gaji > 2 tahun
+
+**SPK Insights:**
+- Jumlah karyawan layak promosi
+- Jumlah kontrak mendekati habis
+- Anomali absensi
 
 ---
 
-## Catatan Akhir
+## 6. Manajemen Karyawan
 
-Aplikasi **HRIS AMM** adalah proyek ambisius yang dibangun oleh tim. Meskipun berjalan di hosting gratis dengan keterbatasan (cold start), semua fitur inti sudah berfungsi penuh.
+Menu **Data Karyawan** menampilkan seluruh data master karyawan dalam bentuk tabel.
 
-**Tips sukses:**
-- Gunakan Chrome/Edge untuk pengalaman terbaik
-- Sabar dengan cold start (5-10 detik pertama)
-- Laporkan bug ke tim developer
+### Fitur
+
+- **Pencarian**: Cari berdasarkan Nama atau NIK
+- **Filter Status**: ACTIVE, PROBATION, RESIGNED
+- **Tambah Karyawan**: Form lengkap dengan data pribadi, departemen, jabatan
+- **Detail Karyawan**: Lihat profil lengkap + riwayat (absensi, cuti, payroll, kinerja, training, skills)
+
+### Data Demo
+
+Terdapat 14 karyawan dengan variasi:
+- 10 karyawan aktif (ACTIVE)
+- 3 karyawan masa percobaan (PROBATION)
+- Tersebar di 6 departemen (HR, IT, Finance, Marketing, Operations, GA)
+- Berbagai level jabatan (Staff, Supervisor, Manager)
 
 ---
 
-*Dokumen ini dibuat pada 31 Mei 2026. Versi terbaru selalu tersedia di repository GitHub.*
+## 7. Absensi & Time Management
+
+### Fitur
+
+- **Riwayat Absensi**: Menampilkan check-in/check-out per bulan
+- **Today Summary**: Ringkasan kehadiran hari ini (Hadir, Izin, Sakit, Cuti, Alpha)
+- **Pengajuan Cuti**: Karyawan bisa mengajukan cuti, Manager/HR bisa approve/reject
+- **Filter Bulan**: Lihat riwayat per bulan tertentu
+
+### Data Demo
+
+Terdapat 588 record absensi selama 60 hari kerja, dengan variasi status:
+- HADIR (mayoritas)
+- IZIN
+- SAKIT
+- ALPHA (tanpa check-in)
+
+Juga terdapat 10 data cuti dengan berbagai status (PENDING, APPROVED, REJECTED) dan tipe (TAHUNAN, SAKIT, PENTING, MELAHIRKAN).
 
 ---
 
-**Judul alternatif untuk buku ini:**
-1. **HRIS AMM: Panduan Lengkap Sistem Informasi SDM Terintegrasi** ← (rekomendasi)
-2. **Buku Sakti HRIS AMM: Panduan Penggunaan dan Pengembangan**
-3. **HRIS AMM Handbook: Dari Login hingga SPK**
-4. **Sistem SDM Digital CV Anugerah Mega Makmur: Panduan Komprehensif**
+## 8. Penilaian Kinerja
+
+Sistem penilaian menggunakan 3 komponen dengan bobot:
+
+| Komponen | Bobot |
+|----------|-------|
+| KPI Score | 40% |
+| Self Review | 20% |
+| 360° Review | 40% |
+
+### Fitur
+
+- **Input Penilaian**: Pilih karyawan, periode, masukkan skor
+- **Grade Otomatis**: A (≥85), B (≥70), C (≥55), D (<55)
+- **Detail Kinerja**: Lihat histori penilaian per periode
+
+### Data Demo
+
+70 record penilaian untuk 14 karyawan selama 5 bulan (Januari - Mei 2026).
+
+Beberapa karyawan sengaja memiliki skor rendah di bulan April-Mei untuk mendemokan fitur Early Warning SPK (skor < 50).
+
+---
+
+## 9. Skills & Kompetensi
+
+### Fitur
+
+- **Daftar Skill**: 18 jenis skill (Teknis & Non-Teknis)
+- **Assign Skill**: Hubungkan skill ke karyawan dengan level proficiency (1-5)
+- **Skill Matrix**: Lihat peta kompetensi seluruh karyawan
+
+### Data Demo
+
+| Kategori | Contoh Skill |
+|----------|-------------|
+| Teknis | JavaScript, TypeScript, React, Node.js, Python, SQL, UI/UX, Excel, Photoshop, SAP |
+| Non-Teknis | Digital Marketing, Financial Analysis, Project Management, Public Speaking, Leadership, Copywriting, Negotiation |
+
+Setiap karyawan memiliki 2-5 skill dengan level proficiency bervariasi.
+
+---
+
+## 10. SPK Dashboard
+
+Sistem Penunjang Keputusan menggunakan metode SMART untuk perhitungan promosi.
+
+### Kriteria Penilaian Promosi
+
+| Kriteria | Bobot |
+|----------|-------|
+| Kinerja (KPI) | 40% |
+| Masa Kerja | 20% |
+| Skill Match | 20% |
+| Disiplin | 10% |
+| 360° Review | 10% |
+
+### Fitur
+
+- **Jalankan SPK Promosi**: Hitung otomatis semua karyawan aktif
+- **Ranking Kandidat**: Urut berdasarkan skor total
+- **Recommended Threshold**: Skor ≥ 75 = direkomendasikan
+- **Early Warning System**:
+  - Kinerja menurun 3 bulan berturut-turut
+  - Kontrak habis < 60 hari
+  - Belum ada kenaikan > 2 tahun
+  - Absensi anomali tinggi
+
+### Data Demo
+
+- 6 kandidat promosi dengan skor dan peringkat
+- Karyawan dengan kinerja menurun (skor < 50)
+- Karyawan dengan kontrak mendekati habis
+- Grafik distribusi menggunakan Recharts
+
+---
+
+## 11. Departemen & Jabatan
+
+### Departemen
+
+| Departemen | Kode |
+|-----------|------|
+| Human Resources | HR |
+| Information Technology | IT |
+| Finance & Accounting | FIN |
+| Marketing | MKT |
+| Operations | OPS |
+| General Affairs | GA |
+
+### Jabatan
+
+13 jabatan tersebar di 6 departemen dengan level:
+- **MANAGER**: HR Manager, IT Manager, Finance Manager, Marketing Manager, Operations Manager
+- **SUPERVISOR**: HR Supervisor
+- **STAFF**: HR Staff, Developer, System Analyst, Accountant, Marketing Staff, Operations Staff, GA Staff
+
+---
+
+## 12. Reset Data (Seed)
+
+Untuk mereset database ke data demo awal:
+
+```bash
+cd backend
+npm run prisma:seed
+```
+
+Perintah ini akan:
+1. Menghapus semua data yang ada
+2. Mengisi ulang dengan 14 karyawan + data dummy lengkap
+3. Reset semua akun ke password default (`admin123`)
+
+### Detail Seed Data
+
+| Modul | Jumlah |
+|-------|--------|
+| Departemen | 6 |
+| Jabatan | 13 |
+| Karyawan | 14 |
+| Absensi | 588 record |
+| Cuti | 10 record |
+| Payroll | 42 record (3 bulan) |
+| Kinerja | 70 record (5 bulan) |
+| Skill | 18 jenis |
+| Training | 10 record |
+| Rekrutmen | 10 kandidat |
+| SPK | 6 hasil promosi |
+
+---
+
+## 13. Struktur Folder
+
+```
+spk_hris/
+├── dev.bat                 # Shortcut double-click untuk menjalankan app
+├── package.json            # Root package.json (concurrently untuk FE+BE)
+├── AGENTS.md               # Konfigurasi AI Assistant
+├── BUKU_PANDUAN.md         # Buku panduan ini
+├── prd.md                  # Product Requirements Document
+│
+├── frontend/               # Next.js 14 App Router
+│   ├── package.json
+│   └── src/
+│       ├── app/            # Halaman-halaman (route)
+│       │   ├── page.tsx         # Dashboard
+│       │   ├── employees/       # Data Karyawan
+│       │   ├── attendance/      # Absensi
+│       │   ├── performance/     # Kinerja
+│       │   ├── spk/             # SPK Dashboard
+│       │   ├── skills/          # Skills & Kompetensi
+│       │   ├── departments/     # Departemen
+│       │   ├── positions/       # Jabatan
+│       │   ├── login/           # Halaman Login
+│       │   └── layout.tsx       # Layout utama
+│       ├── components/     # Komponen UI
+│       │   ├── ui/              # shadcn/ui primitives
+│       │   ├── sidebar.tsx      # Navigasi sidebar
+│       │   └── header.tsx       # Header atas
+│       ├── contexts/       # React Context (Auth, Notification)
+│       ├── lib/            # Utilities (API client, helpers)
+│       └── styles/         # Global CSS
+│
+├── backend/                # NestJS REST API
+│   ├── package.json
+│   ├── prisma/
+│   │   ├── schema.prisma  # Database schema
+│   │   ├── seed.ts        # Data seeder
+│   │   └── migrations/    # Migrasi database
+│   └── src/
+│       ├── main.ts        # Entry point (port 4000)
+│       ├── auth/          # Autentikasi JWT
+│       ├── employees/     # CRUD Karyawan
+│       ├── attendance/    # Absensi
+│       ├── leaves/        # Cuti & Izin
+│       ├── payroll/       # Penggajian
+│       ├── performance/   # Kinerja
+│       ├── training/      # Pelatihan
+│       ├── skills/        # Skills & Matrix
+│       ├── recruitment/   # Rekrutmen
+│       ├── spk/           # SPK & Early Warning
+│       ├── departments/   # Departemen
+│       ├── positions/     # Jabatan
+│       ├── users/         # Manajemen User
+│       └── common/        # Shared (Guards, Decorators, Interceptors)
+│
+└── docker-compose.yml     # Docker setup (opsional)
+```
+
+---
+
+**CV Anugerah Mega Makmur** — *Membangun Tim yang Solid, Tangguh, dan Terukur.*

@@ -1,8 +1,8 @@
-Berikut adalah file **PRD-Web-HRIS-SPK-CV-Anugerah-Mega-Makmur.md** yang sudah digabung dengan seluruh UML diagram:
+Berikut adalah file **PRD-Web-SPK-Supplier-CV-Anugerah-Mega-Makmur.md** yang sudah digabung dengan seluruh UML diagram:
 
 ```markdown
 # Product Requirement Document (PRD)
-# Web HRIS + SPK — CV Anugerah Mega Makmur
+# Web SPK Supplier — CV Anugerah Mega Makmur
 
 > **Versi:** 1.0  
 > **Tanggal:** Juli 2025  

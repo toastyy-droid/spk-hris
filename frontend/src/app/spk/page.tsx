@@ -1,551 +1,312 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useCallback, useEffect, useState } from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { AlertTriangle, Award, PackageCheck, RefreshCw, Star, Truck } from "lucide-react"
 import { api } from "@/lib/api"
+import { useAuth } from "@/contexts/auth-context"
 import { useNotifications } from "@/contexts/notification-context"
-import { TrendingUp, AlertTriangle, Users, DollarSign, BarChart3, PieChart } from "lucide-react"
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from "@/components/ui/dialog"
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart as RePieChart, Pie, Cell, Legend } from "recharts"
+import { canAccess, ROLES } from "@/lib/permissions"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
-interface Candidate {
-  employeeId: number
-  resultId: number
+interface Supplier {
+  id: number
+  name: string
+  category: string
+  productBrand?: string | null
+  totalScore?: number | string | null
+  status: string
+}
+
+interface SupplierResult {
+  supplierId: number
+  resultId?: number
   rank: number
   name: string
-  department: string
-  position: string
+  category: string
+  productBrand?: string | null
+  contactPerson?: string | null
+  phone?: string | null
+  priceScore: number
+  qualityScore: number
+  deliveryScore: number
+  serviceScore: number
+  capacityScore: number
+  shippingCoverage: "SUPPLIER_COVERS" | "BUYER_COVERS"
+  shippingBonus: number
   totalScore: number
   recommended: boolean
-  kpiScore: number
-  masaKerja: number
-  skillMatch: number
   status?: string
 }
 
-interface EarlyWarningBase {
-  employee?: { id: number; name: string; nik: string }
-  score?: number
-  period?: string
-  contractEnd?: string
-  joinDate?: string
-  date?: string
-  name?: string
-  nik?: string
+function shippingCoverageLabel(value: SupplierResult["shippingCoverage"]) {
+  return value === "SUPPLIER_COVERS" ? "Supplier (+0.5)" : "Pembeli"
 }
 
-interface CandidateScore {
-  id: number
-  candidateName: string
-  stage: string
-  totalScore: number | null
-  scoreExperience: number | null
-  scoreEducation: number | null
-  scoreInterview: number | null
-  scoreSoftskill: number | null
-  scoreSalary: number | null
-  position: { name: string; department: { name: string } }
+function toNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === "") return 0
+  return Number(value)
 }
 
-const severityVariant: Record<string, "destructive" | "warning" | "secondary"> = {
-  HIGH: "destructive",
-  MEDIUM: "warning",
-  LOW: "secondary",
+function formatScore(value: number | string | null | undefined) {
+  return toNumber(value).toFixed(2).replace(/\.00$/, "")
 }
 
-const stageVariant: Record<string, "default" | "secondary" | "warning" | "success" | "destructive"> = {
-  SCREENING: "secondary",
-  INTERVIEW: "warning",
-  OFFERING: "default",
-  ONBOARDING: "success",
-  HIRED: "success",
-}
-
-const stageLabel: Record<string, string> = {
-  SCREENING: "Screening",
-  INTERVIEW: "Interview",
-  OFFERING: "Offering",
-  ONBOARDING: "Onboarding",
-  HIRED: "Hired",
-}
-
-const PIE_COLORS = ["#22c55e", "#eab308", "#3b82f6", "#a855f7", "#ef4444"]
-
-function Skeleton({ className }: { className?: string }) {
-  return <div className={`animate-pulse rounded bg-muted ${className ?? ""}`} />
-}
-
-export default function SpkPage() {
-  const [candidates, setCandidates] = useState<Candidate[]>([])
-  const [earlyWarnings, setEarlyWarnings] = useState<{
-    decliningPerformance: EarlyWarningBase[]
-    contractExpiring: EarlyWarningBase[]
-    noRaiseLongTerm: EarlyWarningBase[]
-    highAbsence: EarlyWarningBase[]
-  } | null>(null)
-  const [recruitCandidates, setRecruitCandidates] = useState<CandidateScore[]>([])
-  const [employeeStats, setEmployeeStats] = useState<{
-    total: number; active: number; byDept: { name: string; _count: { employees: number } }[]
-    byStatus: { status: string; _count: number }[]
-  } | null>(null)
-  const [attendanceToday, setAttendanceToday] = useState<{
-    total: number; hadir: number; izin: number; sakit: number; cuti: number; alpha: number
-  } | null>(null)
+export default function SupplierEvaluationPage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+  const { pushNotification } = useNotifications()
+  const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([])
+  const [results, setResults] = useState<SupplierResult[]>([])
+  const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
   const [actionId, setActionId] = useState<number | null>(null)
-  const [spkError, setSpkError] = useState("")
-  const [spkSuccess, setSpkSuccess] = useState("")
-  const { pushNotification } = useNotifications()
-  const [selectedWarning, setSelectedWarning] = useState<{ name: string; nik: string; issue: string; severity: string; detail: string } | null>(null)
+  const [threshold, setThreshold] = useState("7.5")
+  const [categoryFilter, setCategoryFilter] = useState("")
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
+
+  const canManage = !!user && canAccess(user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN_HR])
 
   useEffect(() => {
-    let alive = true
-    function fetchOne<T>(setter: (v: T) => void, endpoint: string, retries = 2) {
-      const attempt = (n: number) => {
-        if (!alive) return
-        api.get<T>(endpoint).then((data) => { if (alive) setter(data) }).catch(() => {
-          if (alive && n > 0) setTimeout(() => attempt(n - 1), 1500)
-        })
-      }
-      attempt(retries)
+    if (!authLoading && user && !canAccess(user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN_HR, ROLES.MANAGER])) {
+      router.push("/")
     }
-    fetchOne(setEmployeeStats, "/employees/stats")
-    fetchOne(setAttendanceToday, "/attendance/summary/today")
-    api.post<{ candidates: Candidate[] }>("/spk/promotion", {}).then((d) => {
-      if (alive) setCandidates(d.candidates ?? [])
-    }).catch(() => {})
-    fetchOne(setEarlyWarnings, "/spk/early-warnings")
-    fetchOne(setRecruitCandidates, "/recruitment")
-    return () => { alive = false }
+  }, [user, authLoading, router])
+
+  const loadSuppliers = useCallback(async (category = "", brand = "", clearResults = true) => {
+    setLoading(true)
+    setError("")
+    if (clearResults) {
+      setResults([])
+      setMessage("")
+    }
+    try {
+      const params = new URLSearchParams()
+      if (category.trim()) params.set("category", category.trim())
+      if (brand.trim()) params.set("brand", brand.trim())
+      const query = params.toString() ? `?${params.toString()}` : ""
+      const data = await api.get<Supplier[]>(`/spk/suppliers${query}`)
+      setSuppliers(data)
+      if (!category.trim() && !brand.trim()) {
+        setAllSuppliers(data)
+      }
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Gagal memuat data supplier.")
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
-  async function fetchPromotion() {
-    setRunning(true)
-    setSpkError("")
-    setSpkSuccess("")
-    try {
-      const data = await api.post<{ threshold: number; candidates: Candidate[] }>("/spk/promotion", {})
-      setCandidates(data.candidates ?? [])
-      const total = data.candidates?.length ?? 0
-      const reco = data.candidates?.filter((c) => c.recommended).length ?? 0
-      setSpkSuccess(`SPK selesai: ${total} kandidat, ${reco} direkomendasikan (threshold ${data.threshold})`)
-      pushNotification("SPK Promosi", `Perhitungan selesai: ${total} kandidat, ${reco} direkomendasikan`)
-      setTimeout(() => setSpkSuccess(""), 5000)
-    } catch {
-      setSpkError("Gagal menjalankan SPK. Pastikan ada data kinerja dan backend berjalan.")
+  useEffect(() => {
+    loadSuppliers()
+  }, [loadSuppliers])
+
+  async function runSelection() {
+    const thresholdValue = Number(threshold)
+    if (!Number.isFinite(thresholdValue) || thresholdValue < 1 || thresholdValue > 10) {
+      setError("Threshold harus berupa angka 1 sampai 10.")
+      setMessage("")
+      return
     }
-    finally { setRunning(false) }
-  }
 
-  async function handleApprove(id: number) {
-    setActionId(id)
+    setRunning(true)
+    setError("")
+    setMessage("")
     try {
-      await api.patch(`/spk/results/${id}`, { status: "APPROVED" })
-      setCandidates((prev) => prev.map((c) => (c.resultId === id ? { ...c, status: "APPROVED" } : c)))
-      pushNotification("Persetujuan Promosi", `Kandidat berhasil di-approve`)
-      setSpkError("")
-    } catch { setSpkError("Gagal approve") }
-    finally { setActionId(null) }
+      const data = await api.post<{ threshold: number; suppliers: SupplierResult[] }>("/spk/supplier-selection", {
+        threshold: thresholdValue,
+        category: categoryFilter.trim() || undefined,
+        productBrand: undefined,
+      })
+      setResults(data.suppliers ?? [])
+      const recommended = data.suppliers.filter((supplier) => supplier.recommended).length
+      setMessage(`Perhitungan selesai: ${data.suppliers.length} supplier dinilai, ${recommended} direkomendasikan.`)
+      pushNotification("Evaluasi Supplier", `Perhitungan selesai dengan threshold ${data.threshold}`)
+      await loadSuppliers(categoryFilter, "", false)
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Gagal menjalankan evaluasi supplier.")
+    } finally {
+      setRunning(false)
+    }
   }
 
-  async function handleReject(id: number) {
-    setActionId(id)
+  async function updateResultStatus(resultId: number | undefined, status: "APPROVED" | "REJECTED") {
+    if (!resultId) return
+    setActionId(resultId)
+    setError("")
     try {
-      await api.patch(`/spk/results/${id}`, { status: "REJECTED" })
-      setCandidates((prev) => prev.map((c) => (c.resultId === id ? { ...c, status: "REJECTED" } : c)))
-      pushNotification("Persetujuan Promosi", `Kandidat ditunda`)
-      setSpkError("")
-    } catch { setSpkError("Gagal menolak") }
-    finally { setActionId(null) }
+      await api.patch(`/spk/results/${resultId}`, { status })
+      setResults((prev) => prev.map((item) => (item.resultId === resultId ? { ...item, status } : item)))
+      pushNotification("Evaluasi Supplier", status === "APPROVED" ? "Supplier disetujui" : "Rekomendasi supplier ditunda")
+    } catch {
+      setError("Gagal memperbarui status rekomendasi")
+    } finally {
+      setActionId(null)
+    }
   }
 
-  const totalPromo = candidates.filter((c) => c.recommended).length
-  const totalWarnings = earlyWarnings
-    ? (earlyWarnings.decliningPerformance?.length ?? 0) +
-      (earlyWarnings.contractExpiring?.length ?? 0) +
-      (earlyWarnings.noRaiseLongTerm?.length ?? 0) +
-      (earlyWarnings.highAbsence?.length ?? 0)
+  const activeSuppliers = suppliers.filter((supplier) => supplier.status === "ACTIVE").length
+  const bestSupplier = results[0]
+  const recommendedCount = results.filter((supplier) => supplier.recommended).length
+  const categoryOptions = Array.from(new Set(allSuppliers.map((supplier) => supplier.category))).sort()
+  const averageScore = suppliers.length > 0
+    ? suppliers.reduce((total, supplier) => total + toNumber(supplier.totalScore), 0) / suppliers.length
     : 0
-  const contractCount = earlyWarnings?.contractExpiring?.length ?? 0
-
-  const rankedRecruits = [...recruitCandidates]
-    .filter((c) => c.totalScore !== null && c.totalScore !== 0)
-    .sort((a, b) => (b.totalScore ?? 0) - (a.totalScore ?? 0))
-    .map((c, i) => ({ ...c, rank: i + 1 }))
-
-  const deptData = (employeeStats?.byDept ?? []).map((d) => ({
-    name: d.name,
-    value: d._count.employees,
-  }))
-
-  const statusData = (employeeStats?.byStatus ?? []).map((s) => {
-    const labels: Record<string, string> = { ACTIVE: "Aktif", PROBATION: "Probation", RESIGNED: "Resign", TERMINATED: "Terminated" }
-    return { name: labels[s.status] ?? s.status, value: s._count }
-  })
-
-  const attData = attendanceToday
-    ? [
-        { name: "Hadir", value: attendanceToday.hadir },
-        { name: "Cuti", value: attendanceToday.cuti },
-        { name: "Izin", value: attendanceToday.izin },
-        { name: "Sakit", value: attendanceToday.sakit },
-        { name: "Alpha", value: attendanceToday.alpha },
-      ]
-    : []
-
-  const earlyWarningList: { name: string; nik: string; issue: string; severity: string; detail: string }[] = [
-    ...(earlyWarnings?.decliningPerformance ?? []).map((w) => ({
-      name: w.employee?.name ?? "", nik: w.employee?.nik ?? "", issue: "Kinerja turun 3 bulan", severity: "HIGH",
-      detail: `Skor kinerja menurun selama 3 periode berturut-turut. Disarankan melakukan coaching dan evaluasi.`,
-    })),
-    ...(earlyWarnings?.highAbsence ?? []).map((w) => ({
-      name: w.employee?.name ?? "", nik: w.employee?.nik ?? "", issue: "Absensi melebihi threshold", severity: "MEDIUM",
-      detail: `Tingkat absensi di atas batas wajar (alpha/izin tanpa keterangan). Perlu tindakan disiplin atau konseling.`,
-    })),
-    ...(earlyWarnings?.noRaiseLongTerm ?? []).map((w) => ({
-      name: w.employee?.name ?? "", nik: w.employee?.nik ?? "", issue: "Belum naik gaji > 2 tahun", severity: "LOW",
-      detail: `Belum mendapatkan kenaikan gaji lebih dari 2 tahun. Pertimbangkan review kompensasi.`,
-    })),
-    ...(earlyWarnings?.contractExpiring ?? []).map((w) => ({
-      name: w.employee?.name ?? w.name ?? "", nik: w.employee?.nik ?? w.nik ?? "", issue: "Kontrak habis < 60 hari", severity: "HIGH",
-      detail: `Kontrak akan berakhir dalam waktu dekat. Segera lakukan review perpanjangan atau terminasi.`,
-    })),
-  ]
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">SPK Dashboard</h1>
-        <p className="text-muted-foreground">Sistem Penunjang Keputusan berbasis data analytics</p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Evaluasi Supplier</h1>
+        <Button asChild variant="outline">
+          <Link href="/suppliers">Kelola Data Supplier</Link>
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm text-muted-foreground">Layak Promosi</CardTitle>
-            <TrendingUp className="h-4 w-4 text-green-600" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Total Supplier</CardTitle>
+            <PackageCheck className="h-4 w-4 text-blue-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{totalPromo}</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold">{suppliers.length}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm text-muted-foreground">Early Warning</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Supplier Aktif</CardTitle>
+            <Truck className="h-4 w-4 text-green-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">{totalWarnings}</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold text-green-600">{activeSuppliers}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm text-muted-foreground">Kontrak Mendekati Habis</CardTitle>
-            <Users className="h-4 w-4 text-yellow-600" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Direkomendasikan</CardTitle>
+            <Award className="h-4 w-4 text-yellow-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{contractCount}</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold text-yellow-600">{recommendedCount}</div></CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2 flex flex-row items-center justify-between">
-            <CardTitle className="text-sm text-muted-foreground">Total Kandidat</CardTitle>
-            <DollarSign className="h-4 w-4 text-blue-600" />
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm text-muted-foreground">Rata-rata Skor</CardTitle>
+            <Star className="h-4 w-4 text-purple-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{recruitCandidates.length}</div>
-          </CardContent>
+          <CardContent><div className="text-2xl font-bold text-purple-600">{formatScore(averageScore)}</div></CardContent>
         </Card>
       </div>
 
-      <Tabs defaultValue="promosi">
-        <TabsList>
-          <TabsTrigger value="promosi">Rekomendasi Promosi</TabsTrigger>
-          <TabsTrigger value="early">Early Warning</TabsTrigger>
-          <TabsTrigger value="rekrut">Rekomendasi Rekrutmen</TabsTrigger>
-          <TabsTrigger value="analitik">Dashboard Analitik</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="promosi" className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Button onClick={fetchPromotion} disabled={running}>
-              {running ? "Memproses..." : "Jalankan SPK Promosi"}
+      <Card>
+        <CardHeader><CardTitle>Proses Evaluasi</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-3 md:grid-cols-[1fr_160px_auto_auto] md:items-end">
+            <div className="space-y-2">
+              <Label htmlFor="categoryFilter">Jenis Aksesoris HP</Label>
+              <Select value={categoryFilter || "ALL"} onValueChange={(value) => setCategoryFilter(value === "ALL" ? "" : value)}>
+                <SelectTrigger id="categoryFilter"><SelectValue placeholder="Pilih jenis aksesoris" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Semua Aksesoris HP</SelectItem>
+                  {categoryOptions.map((category) => (
+                    <SelectItem key={category} value={category}>{category}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="threshold">Threshold</Label>
+              <Input id="threshold" type="number" min="1" max="10" step="0.1" value={threshold} onChange={(event) => setThreshold(event.target.value)} />
+            </div>
+            <Button variant="outline" onClick={() => loadSuppliers(categoryFilter, "")} disabled={loading}>
+              <RefreshCw className="mr-2 h-4 w-4" /> Muat Data
             </Button>
-            {spkSuccess && <p className="text-sm text-green-600 dark:text-green-400">{spkSuccess}</p>}
-            {spkError && <p className="text-sm text-red-600 dark:text-red-400">{spkError}</p>}
+            <Button onClick={runSelection} disabled={running || allSuppliers.length === 0}>
+              {running ? "Memproses..." : "Jalankan Evaluasi"}
+            </Button>
           </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Peringkat Kandidat Promosi</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 grid grid-cols-5 gap-2 text-xs text-muted-foreground">
-                <div className="font-medium">Kriteria & Bobot:</div>
-                <div>Skor Kinerja 40%</div>
-                <div>Masa Kerja 20%</div>
-                <div>Skill Match 20%</div>
-                <div>Disiplin 10% + 360 10%</div>
-              </div>
-              {candidates.length === 0 ? (
-                <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                  Belum ada data. Jalankan SPK untuk melihat rekomendasi.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>#</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead>Divisi</TableHead>
-                      <TableHead>KPI Score</TableHead>
-                      <TableHead>Masa Kerja</TableHead>
-                      <TableHead>Skill Match</TableHead>
-                      <TableHead>Skor Total</TableHead>
-                      <TableHead>Rekomendasi</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {candidates.map((c) => (
-                      <TableRow key={c.rank}>
-                        <TableCell className="font-bold">{c.rank}</TableCell>
-                        <TableCell className="font-medium">{c.name}</TableCell>
-                        <TableCell>{c.department}</TableCell>
-                        <TableCell>{c.kpiScore}%</TableCell>
-                        <TableCell>{c.masaKerja} thn</TableCell>
-                        <TableCell>{c.skillMatch}%</TableCell>
-                        <TableCell className="font-bold text-lg">{c.totalScore}</TableCell>
-                        <TableCell>
-                          <Badge variant={c.recommended ? "success" : "secondary"}>
-                            {c.recommended ? "Direkomendasikan" : "Tidak"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {c.status === "APPROVED" || c.status === "REJECTED" ? (
-                            <Badge variant={c.status === "APPROVED" ? "success" : "warning"}>
-                              {c.status === "APPROVED" ? "Approved" : "Ditunda"}
-                            </Badge>
-                          ) : (
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="default" disabled={actionId === c.resultId} onClick={() => handleApprove(c.resultId)}>
-                                {actionId === c.resultId ? "..." : "Approve"}
-                              </Button>
-                              <Button size="sm" variant="outline" disabled={actionId === c.resultId} onClick={() => handleReject(c.resultId)}>
-                                Tunda
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="early" className="space-y-4">
-          <Card>
-            <CardHeader><CardTitle>Early Warning System</CardTitle></CardHeader>
-            <CardContent>
-              {earlyWarningList.length === 0 ? (
-                <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                  Tidak ada early warning
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nama</TableHead>
-                      <TableHead>Issue</TableHead>
-                      <TableHead>Severity</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {earlyWarningList.map((w, i) => (
-                      <TableRow key={i}>
-                        <TableCell className="font-medium">{w.name}</TableCell>
-                        <TableCell>{w.issue}</TableCell>
-                        <TableCell>
-                          <Badge variant={severityVariant[w.severity] ?? "secondary"}>{w.severity}</Badge>
-                        </TableCell>
-                        <TableCell><Button variant="ghost" size="sm" onClick={() => setSelectedWarning(w)}>Detail</Button></TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="rekrut" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Rekomendasi Rekrutmen</CardTitle>
-              <p className="text-xs text-muted-foreground">
-                Bobot: Pengalaman 30% | Pendidikan 25% | Interview 25% | Soft Skill 10% | Gaji 10%
-              </p>
-            </CardHeader>
-            <CardContent>
-              {rankedRecruits.length === 0 ? (
-                <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                  Belum ada kandidat dengan skor. Lakukan penilaian di halaman Rekrutmen.
-                </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>#</TableHead>
-                      <TableHead>Nama</TableHead>
-                      <TableHead>Posisi</TableHead>
-                      <TableHead>Divisi</TableHead>
-                      <TableHead>Stage</TableHead>
-                      <TableHead>Pengalaman</TableHead>
-                      <TableHead>Pendidikan</TableHead>
-                      <TableHead>Interview</TableHead>
-                      <TableHead>Soft Skill</TableHead>
-                      <TableHead>Gaji</TableHead>
-                      <TableHead>Skor Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {rankedRecruits.map((c) => (
-                      <TableRow key={c.id}>
-                        <TableCell className="font-bold">{c.rank}</TableCell>
-                        <TableCell className="font-medium">{c.candidateName}</TableCell>
-                        <TableCell>{c.position.name}</TableCell>
-                        <TableCell>{c.position.department.name}</TableCell>
-                        <TableCell>
-                          <Badge variant={stageVariant[c.stage] ?? "default"}>
-                            {stageLabel[c.stage] ?? c.stage}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{c.scoreExperience ?? "-"}</TableCell>
-                        <TableCell>{c.scoreEducation ?? "-"}</TableCell>
-                        <TableCell>{c.scoreInterview ?? "-"}</TableCell>
-                        <TableCell>{c.scoreSoftskill ?? "-"}</TableCell>
-                        <TableCell>{c.scoreSalary ?? "-"}</TableCell>
-                        <TableCell className="font-bold text-lg">{c.totalScore}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="analitik" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" /> Karyawan per Departemen
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {deptData.length === 0 ? (
-                  <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-                    {employeeStats === null ? <Skeleton className="h-48 w-full" /> : "Belum ada data"}
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={deptData}>
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PieChart className="h-4 w-4" /> Status Kehadiran Hari Ini
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {attData.length === 0 || attData.every((d) => d.value === 0) ? (
-                  <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-                    {attendanceToday === null ? <Skeleton className="h-48 w-full" /> : "Belum ada data"}
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <RePieChart>
-                      <Pie data={attData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                        {attData.map((_, i) => (
-                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                      <Legend />
-                    </RePieChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <BarChart3 className="h-4 w-4" /> Status Karyawan
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {statusData.length === 0 ? (
-                  <div className="flex h-48 items-center justify-center text-sm text-muted-foreground">
-                    {employeeStats === null ? <Skeleton className="h-48 w-full" /> : "Belum ada data"}
-                  </div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <BarChart data={statusData}>
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                      <YAxis allowDecimals={false} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
-      {/* Early Warning Detail Dialog */}
-      <Dialog open={selectedWarning !== null} onOpenChange={(open) => { if (!open) setSelectedWarning(null) }}>
-        <DialogContent className="max-w-sm">
-          {selectedWarning && (
-            <>
-              <DialogHeader>
-                <DialogTitle>Detail Early Warning</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Nama</span><span className="font-medium">{selectedWarning.name}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">NIK</span><span>{selectedWarning.nik}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Issue</span><span>{selectedWarning.issue}</span></div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Severity</span>
-                  <Badge variant={severityVariant[selectedWarning.severity] ?? "secondary"}>{selectedWarning.severity}</Badge>
-                </div>
-                <hr />
-                <p className="text-muted-foreground">{selectedWarning.detail}</p>
-              </div>
-            </>
+          {!loading && suppliers.length === 0 && (
+            <p className="text-sm text-muted-foreground">Tidak ada supplier aktif yang cocok dengan filter ini.</p>
           )}
-        </DialogContent>
-      </Dialog>
+          {message && <p className="text-sm text-green-600 dark:text-green-400">{message}</p>}
+          {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {bestSupplier && (
+            <div className="rounded-lg border bg-muted/40 p-4 text-sm">
+              Supplier terbaik saat ini adalah <span className="font-semibold">{bestSupplier.name}</span> dengan skor <span className="font-semibold">{formatScore(bestSupplier.totalScore)}</span>.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Ranking Hasil Evaluasi</CardTitle></CardHeader>
+        <CardContent>
+          {results.length === 0 ? (
+            <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+              <AlertTriangle className="h-4 w-4" /> Belum ada hasil. Jalankan evaluasi untuk membuat ranking supplier.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>#</TableHead>
+                  <TableHead>Supplier</TableHead>
+                  <TableHead>Jenis Aksesoris HP</TableHead>
+                  <TableHead>Harga</TableHead>
+                  <TableHead>Kualitas</TableHead>
+                  <TableHead>Pengiriman</TableHead>
+                  <TableHead>Layanan</TableHead>
+                  <TableHead>Kapasitas</TableHead>
+                  <TableHead>Ongkir</TableHead>
+                  <TableHead>Skor</TableHead>
+                  <TableHead>Rekomendasi</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {results.map((supplier) => (
+                  <TableRow key={supplier.supplierId}>
+                    <TableCell className="font-bold">{supplier.rank}</TableCell>
+                    <TableCell>
+                      <div className="font-medium">{supplier.name}</div>
+                      <div className="text-xs text-muted-foreground">{supplier.contactPerson || supplier.phone || "-"}</div>
+                    </TableCell>
+                    <TableCell>{supplier.category}</TableCell>
+                    <TableCell>{formatScore(supplier.priceScore)}</TableCell>
+                    <TableCell>{formatScore(supplier.qualityScore)}</TableCell>
+                    <TableCell>{formatScore(supplier.deliveryScore)}</TableCell>
+                    <TableCell>{formatScore(supplier.serviceScore)}</TableCell>
+                    <TableCell>{formatScore(supplier.capacityScore)}</TableCell>
+                    <TableCell>
+                      <Badge variant={supplier.shippingCoverage === "SUPPLIER_COVERS" ? "success" : "outline"}>
+                        {shippingCoverageLabel(supplier.shippingCoverage)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-lg font-bold">{formatScore(supplier.totalScore)}</TableCell>
+                    <TableCell>
+                      <Badge variant={supplier.recommended ? "success" : "secondary"}>{supplier.recommended ? "Direkomendasikan" : "Tidak"}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {supplier.status === "APPROVED" || supplier.status === "REJECTED" ? (
+                        <Badge variant={supplier.status === "APPROVED" ? "success" : "warning"}>{supplier.status === "APPROVED" ? "Disetujui" : "Ditunda"}</Badge>
+                      ) : canManage ? (
+                        <div className="flex gap-2">
+                          <Button size="sm" disabled={actionId === supplier.resultId} onClick={() => updateResultStatus(supplier.resultId, "APPROVED")}>Approve</Button>
+                          <Button size="sm" variant="outline" disabled={actionId === supplier.resultId} onClick={() => updateResultStatus(supplier.resultId, "REJECTED")}>Tunda</Button>
+                        </div>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

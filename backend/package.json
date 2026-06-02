@@ -1,5 +1,5 @@
 {
-  "name": "hris-amm-backend",
+  "name": "supplier-spk-backend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
@@ -48,7 +48,11 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.14.1",
     "@types/passport-jwt": "^4.0.1",
+    "@typescript-eslint/eslint-plugin": "^8.60.0",
+    "@typescript-eslint/parser": "^8.60.0",
     "eslint": "^8.57.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.6",
     "jest": "^29.7.0",
     "prettier": "^3.5.3",
     "prisma": "^6.5.0",

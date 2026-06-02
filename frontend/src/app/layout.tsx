@@ -1,25 +1,19 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Sora } from "next/font/google";
 import "./globals.css";
-import Sidebar from "@/components/sidebar";
-import Header from "@/components/header";
+import AppShell from "@/components/app-shell";
 import { Providers } from "@/components/providers";
+import { Toaster } from "sonner";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-sora",
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "HRIS AMM - CV Anugerah Mega Makmur",
-  description: "Human Resource Information System & Sistem Penunjang Keputusan",
+  title: "Pemilihan Supplier Terbaik",
+  description: "Aplikasi evaluasi dan pemilihan supplier terbaik",
 };
 
 export default function RootLayout({
@@ -28,18 +22,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <html lang="id" suppressHydrationWarning className="overflow-hidden">
+      <body className={`${sora.variable} font-sans antialiased overflow-hidden`}>
         <Providers>
-          <div className="flex h-screen overflow-hidden">
-            <Sidebar />
-            <div className="flex flex-1 flex-col overflow-hidden">
-              <Header />
-              <main className="flex-1 overflow-y-auto p-6 bg-muted/30">
-                {children}
-              </main>
-            </div>
-          </div>
+          <AppShell>{children}</AppShell>
+          <Toaster richColors position="top-right" closeButton />
         </Providers>
       </body>
     </html>

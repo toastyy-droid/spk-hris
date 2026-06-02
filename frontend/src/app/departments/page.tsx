@@ -1,12 +1,16 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { api } from "@/lib/api"
+import { toast } from "sonner"
 import { Plus, Loader2, AlertCircle, RefreshCw, Building2 } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
+import { canAccess, ROLES } from "@/lib/permissions"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog"
@@ -23,6 +27,15 @@ interface Department {
 }
 
 export default function DepartmentsPage() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!authLoading && user && !canAccess(user.role, [ROLES.SUPER_ADMIN, ROLES.ADMIN_HR, ROLES.MANAGER])) {
+      router.push("/")
+    }
+  }, [user, authLoading, router])
+
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
@@ -65,7 +78,7 @@ export default function DepartmentsPage() {
       setShowCreate(false)
       fetchData()
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Gagal menyimpan")
+      toast.error(err instanceof Error ? err.message : "Gagal menyimpan")
     } finally {
       setSaving(false)
     }
@@ -76,7 +89,6 @@ export default function DepartmentsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Departemen</h1>
-          <p className="text-muted-foreground">Kelola struktur departemen perusahaan</p>
         </div>
         <Button size="sm" onClick={openCreate}>
           <Plus className="h-4 w-4 mr-1" /> Tambah Departemen

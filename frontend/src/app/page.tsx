@@ -1,279 +1,243 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { Award, BarChart3, PackageCheck, Star, Truck } from "lucide-react"
+import { api } from "@/lib/api"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { api } from "@/lib/api"
-import {
-  Users, Clock, DollarSign, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight,
-} from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-const now = new Date()
-const currentMonth = now.getMonth() + 1
-const currentYear = now.getFullYear()
-
-function formatRp(value: number): string {
-  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(value)
+interface Supplier {
+  id: number
+  name: string
+  category: string
+  productBrand?: string | null
+  contactPerson?: string | null
+  phone?: string | null
+  priceScore: number | string
+  qualityScore: number | string
+  deliveryScore: number | string
+  serviceScore: number | string
+  capacityScore: number | string
+  totalScore?: number | string | null
+  status: string
 }
 
-function getMonthName(m: number) {
-  const names = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"]
-  return names[m - 1] ?? ""
+interface SpkResult {
+  id: number
+  type: string
+  referenceId: number | null
+  score: number | string
+  rank: number | null
+  details?: {
+    name?: string
+    category?: string
+    recommended?: boolean
+    status?: string
+    totalScore?: number
+  } | null
 }
 
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className ?? ""}`} />
 }
 
+function toNumber(value: number | string | null | undefined) {
+  if (value === null || value === undefined || value === "") return 0
+  return Number(value)
+}
+
+function formatScore(value: number | string | null | undefined) {
+  return toNumber(value).toFixed(2).replace(/\.00$/, "")
+}
+
 export default function Dashboard() {
-  const [employeeStats, setEmployeeStats] = useState<{ total: number; active: number; byDept: { name: string; _count: { employees: number } }[]; byStatus: { status: string; _count: number }[]; contractExpiring: { id: number; name: string; nik: string; contractEnd: string }[] } | null>(null)
-  const [attendanceToday, setAttendanceToday] = useState<{ total: number; hadir: number; izin: number; sakit: number; cuti: number; alpha: number } | null>(null)
-  const [payrollSummary, setPayrollSummary] = useState<{ count: number; totalGross: number; totalNet: number; byDepartment: Record<string, number> } | null>(null)
-  const [earlyWarnings, setEarlyWarnings] = useState<{ decliningPerformance: unknown[]; contractExpiring: unknown[]; noRaiseLongTerm: unknown[]; highAbsence: unknown[] } | null>(null)
+  const [suppliers, setSuppliers] = useState<Supplier[] | null>(null)
+  const [results, setResults] = useState<SpkResult[] | null>(null)
+  const [error, setError] = useState("")
 
   useEffect(() => {
     let alive = true
-    function fetchOne<T>(setter: (v: T) => void, endpoint: string, retries = 2) {
-      const attempt = (n: number) => {
+
+    async function load() {
+      setError("")
+      try {
+        const [supplierData, resultData] = await Promise.all([
+          api.get<Supplier[]>("/spk/suppliers"),
+          api.get<SpkResult[]>("/spk/results?type=SUPPLIER_SELECTION"),
+        ])
         if (!alive) return
-        api.get<T>(endpoint).then((data) => { if (alive) setter(data) }).catch(() => {
-          if (alive && n > 0) setTimeout(() => attempt(n - 1), 1500)
-        })
+        setSuppliers(supplierData)
+        setResults(resultData)
+      } catch {
+        if (alive) setError("Gagal memuat dashboard supplier. Pastikan backend berjalan dan akun memiliki akses evaluasi supplier.")
       }
-      attempt(retries)
     }
-    fetchOne(setEmployeeStats, "/employees/stats")
-    fetchOne(setAttendanceToday, "/attendance/summary/today")
-    fetchOne(setPayrollSummary, `/payroll/summary?month=${currentMonth}&year=${currentYear}`)
-    fetchOne(setEarlyWarnings, "/spk/early-warnings")
+
+    load()
     return () => { alive = false }
   }, [])
 
-  const totalKaryawan = employeeStats?.total ?? 0
-  const hadirHariIni = attendanceToday?.hadir ?? 0
-  const hadirPersen = attendanceToday && attendanceToday.total > 0
-    ? ((attendanceToday.hadir / attendanceToday.total) * 100).toFixed(1)
-    : "0"
-  const cutiHariIni = attendanceToday?.cuti ?? 0
-  const bebanGaji = payrollSummary?.totalGross ?? 0
+  const totalSuppliers = suppliers?.length ?? 0
+  const activeSuppliers = suppliers?.filter((supplier) => supplier.status === "ACTIVE").length ?? 0
+  const averageScore = suppliers && suppliers.length > 0
+    ? suppliers.reduce((total, supplier) => total + toNumber(supplier.totalScore), 0) / suppliers.length
+    : 0
 
-  const alerts: { label: string; count: string; variant: "warning" | "destructive" | "success" | "secondary" }[] = []
-  if (employeeStats?.contractExpiring && employeeStats.contractExpiring.length > 0) {
-    alerts.push({ label: "Kontrak habis < 60 hari", count: String(employeeStats.contractExpiring.length), variant: "warning" })
-  }
-  if (earlyWarnings?.decliningPerformance && earlyWarnings.decliningPerformance.length > 0) {
-    alerts.push({ label: "Kinerja turun 3 bulan", count: String(earlyWarnings.decliningPerformance.length), variant: "destructive" })
-  }
-  if (earlyWarnings?.highAbsence && earlyWarnings.highAbsence.length > 0) {
-    alerts.push({ label: "Absensi anomaly", count: String(earlyWarnings.highAbsence.length), variant: "warning" })
-  }
-  if (earlyWarnings?.noRaiseLongTerm && earlyWarnings.noRaiseLongTerm.length > 0) {
-    alerts.push({ label: "Belum naik gaji > 2 thn", count: String(earlyWarnings.noRaiseLongTerm.length), variant: "secondary" })
-  }
-  if (alerts.length === 0) {
-    alerts.push({ label: "Tidak ada alert", count: "0", variant: "success" })
-  }
-
-  const promoCount = earlyWarnings?.decliningPerformance
-    ? Math.max(0, (employeeStats?.active ?? 0) - earlyWarnings.decliningPerformance.length)
-    : null
+  const latestResults = (results ?? [])
+    .filter((result) => result.type === "SUPPLIER_SELECTION")
+    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
+  const recommendedResults = latestResults.filter((result) => result.details?.recommended)
+  const categoryCounts = (suppliers ?? []).reduce<Record<string, number>>((acc, supplier) => {
+    acc[supplier.category] = (acc[supplier.category] ?? 0) + 1
+    return acc
+  }, {})
+  const categoryRows = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])
+  const topSuppliers = [...(suppliers ?? [])]
+    .sort((a, b) => toNumber(b.totalScore) - toNumber(a.totalScore))
+    .slice(0, 5)
+  const bestSupplier = topSuppliers[0]
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Overview HRIS CV Anugerah Mega Makmur</p>
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard Supplier</h1>
+        </div>
+        <Button asChild>
+          <Link href="/spk">Kelola Supplier</Link>
+        </Button>
       </div>
+
+      {error && <p className="rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="shadow-card border-subtle">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Karyawan</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Supplier</CardTitle>
+            <PackageCheck className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{employeeStats ? totalKaryawan : <Skeleton className="h-8 w-16" />}</div>
-            <div className="flex items-center gap-1 text-xs text-green-600">
-              <ArrowUpRight className="h-3 w-3" />
-              {employeeStats ? `${employeeStats.active} aktif` : <Skeleton className="h-3 w-12" />}
-            </div>
+            <div className="text-2xl font-bold">{suppliers ? totalSuppliers : <Skeleton className="h-8 w-16" />}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Alternatif yang tersedia</p>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="shadow-card border-subtle">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Hadir Hari Ini</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Supplier Aktif</CardTitle>
+            <Truck className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{attendanceToday ? hadirHariIni : <Skeleton className="h-8 w-16" />}</div>
-            <div className={`flex items-center gap-1 text-xs ${Number(hadirPersen) >= 80 ? "text-green-600" : "text-red-600"}`}>
-              <ArrowUpRight className="h-3 w-3" />
-              {attendanceToday ? `${hadirPersen}% kehadiran` : <Skeleton className="h-3 w-20" />}
-            </div>
+            <div className="text-2xl font-bold text-green-600">{suppliers ? activeSuppliers : <Skeleton className="h-8 w-16" />}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Siap masuk proses evaluasi</p>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="shadow-card border-subtle">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Cuti Hari Ini</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Direkomendasikan</CardTitle>
+            <Award className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{attendanceToday ? cutiHariIni : <Skeleton className="h-8 w-16" />}</div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              {attendanceToday ? `${attendanceToday.izin + attendanceToday.sakit} izin/sakit` : <Skeleton className="h-3 w-24" />}
-            </div>
+            <div className="text-2xl font-bold text-yellow-600">{results ? recommendedResults.length : <Skeleton className="h-8 w-16" />}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Dari hasil evaluasi terakhir</p>
           </CardContent>
         </Card>
-        <Card>
+
+        <Card className="shadow-card border-subtle">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Beban Gaji {getMonthName(currentMonth)}
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-muted-foreground">Rata-rata Skor</CardTitle>
+            <Star className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{payrollSummary ? (bebanGaji > 0 ? formatRp(bebanGaji) : "-") : <Skeleton className="h-8 w-24" />}</div>
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              {payrollSummary ? `${payrollSummary.count} karyawan` : <Skeleton className="h-3 w-20" />}
-            </div>
+            <div className="text-2xl font-bold text-purple-600">{suppliers ? formatScore(averageScore) : <Skeleton className="h-8 w-16" />}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Berdasarkan skor supplier</p>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-2 shadow-card border-subtle">
           <CardHeader>
-            <CardTitle className="text-lg">Distribusi Karyawan per Departemen</CardTitle>
+            <CardTitle className="text-base font-semibold">Supplier Terbaik</CardTitle>
           </CardHeader>
           <CardContent>
-            {employeeStats?.byDept && employeeStats.byDept.length > 0 ? (
-              <div className="space-y-3">
-                {employeeStats.byDept.map((d) => (
-                  <div key={d.name} className="flex items-center gap-3">
-                    <span className="w-28 text-sm font-medium truncate">{d.name}</span>
-                    <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${(d._count.employees / totalKaryawan) * 100}%` }}
-                      />
-                    </div>
-                    <span className="w-10 text-sm text-right text-muted-foreground">{d._count.employees}</span>
+            {bestSupplier ? (
+              <div className="rounded-xl border bg-muted/30 p-5">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Skor tertinggi saat ini</p>
+                    <h2 className="mt-1 text-xl font-semibold">{bestSupplier.name}</h2>
+                    <p className="text-sm text-muted-foreground">Jenis aksesoris HP: {bestSupplier.category}</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex h-40 items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground text-sm">
-                {employeeStats === null ? "Memuat..." : "Belum ada data"}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Alert System</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {alerts.map((a) => (
-              <div key={a.label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">{a.label}</span>
-                </div>
-                <Badge variant={a.variant}>{a.count}</Badge>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Status Karyawan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {employeeStats?.byStatus && employeeStats.byStatus.length > 0 ? (
-              <div className="space-y-3">
-                {employeeStats.byStatus.map((s) => (
-                  <div key={s.status} className="flex items-center justify-between text-sm">
-                    <span>{s.status === "ACTIVE" ? "Aktif" : s.status === "PROBATION" ? "Probation" : s.status === "RESIGNED" ? "Resign" : s.status}</span>
-                    <Badge variant={s.status === "ACTIVE" ? "success" : s.status === "PROBATION" ? "warning" : "destructive"}>
-                      {s._count}
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-primary">{formatScore(bestSupplier.totalScore)}</div>
+                    <Badge variant={toNumber(bestSupplier.totalScore) >= 7.5 ? "success" : "secondary"}>
+                      {toNumber(bestSupplier.totalScore) >= 7.5 ? "Direkomendasikan" : "Perlu Review"}
                     </Badge>
                   </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-44 flex-col items-center justify-center rounded-lg border-2 border-dashed text-center text-sm text-muted-foreground">
+                <BarChart3 className="mb-2 h-8 w-8 text-muted-foreground/50" />
+                Belum ada hasil ranking. Jalankan evaluasi supplier terlebih dahulu.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-card border-subtle">
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Jenis Aksesoris HP</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {categoryRows.length > 0 ? (
+              <div className="space-y-3">
+                {categoryRows.map(([category, count]) => (
+                  <div key={category} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate font-medium">{category}</span>
+                    <Badge variant="outline">{count}</Badge>
+                  </div>
                 ))}
               </div>
             ) : (
-              <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed text-muted-foreground text-sm">
-                {employeeStats === null ? "Memuat..." : "Belum ada data"}
+              <div className="flex h-44 items-center justify-center rounded-lg border-2 border-dashed text-sm text-muted-foreground">
+                {suppliers === null ? "Memuat..." : "Belum ada jenis aksesoris"}
               </div>
             )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">SPK Insights</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {employeeStats && promoCount !== null ? (
-              <div className="flex items-center gap-2 text-sm">
-                <TrendingUp className="h-4 w-4 text-green-600" />
-                <span>{promoCount} karyawan layak promosi</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <TrendingUp className="h-4 w-4" />
-                <span>Jalankan SPK untuk melihat</span>
-              </div>
-            )}
-            {employeeStats?.contractExpiring && employeeStats.contractExpiring.length > 0 ? (
-              <div className="flex items-center gap-2 text-sm">
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <span>{employeeStats.contractExpiring.length} kontrak &lt; 60 hari</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <AlertTriangle className="h-4 w-4" />
-                <span>Tidak ada kontrak mendekati habis</span>
-              </div>
-            )}
-            {earlyWarnings?.highAbsence && earlyWarnings.highAbsence.length > 0 ? (
-              <div className="flex items-center gap-2 text-sm">
-                <ArrowDownRight className="h-4 w-4 text-red-600" />
-                <span>Anomali absensi: {earlyWarnings.highAbsence.length} karyawan</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <ArrowDownRight className="h-4 w-4" />
-                <span>Tidak ada anomali absensi</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Quick Actions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button className="w-full justify-start" variant="outline" size="sm" asChild>
-              <a href="/attendance">+ Input Absen</a>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" size="sm" asChild>
-              <a href="/attendance">+ Review Cuti</a>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" size="sm" asChild>
-              <a href="/payroll">+ Buat Slip Gaji</a>
-            </Button>
-            <Button className="w-full justify-start" variant="outline" size="sm" asChild>
-              <a href="/recruitment">+ Buka Lowongan</a>
-            </Button>
           </CardContent>
         </Card>
       </div>
+
+      <Card className="shadow-card border-subtle">
+        <CardHeader>
+          <CardTitle className="text-base font-semibold">Top Supplier Berdasarkan Skor</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {topSuppliers.length > 0 ? (
+            <div className="space-y-3">
+              {topSuppliers.map((supplier, index) => (
+                <div key={supplier.id} className="flex items-center gap-3 rounded-lg border p-3 text-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">{index + 1}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{supplier.name}</p>
+                    <p className="text-xs text-muted-foreground">Jenis aksesoris HP: {supplier.category}</p>
+                  </div>
+                  <Badge variant={supplier.status === "ACTIVE" ? "success" : "secondary"}>{supplier.status === "ACTIVE" ? "Aktif" : "Nonaktif"}</Badge>
+                  <div className="w-16 text-right font-semibold">{supplier.totalScore ? formatScore(supplier.totalScore) : "-"}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed text-sm text-muted-foreground">
+              {suppliers === null ? "Memuat..." : "Belum ada supplier"}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

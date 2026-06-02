@@ -1,5 +1,6 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
-const TIMEOUT_MS = 15000;
+const TIMEOUT_MS = 45000;
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
 interface ApiResponse<T> {
   success: boolean;
@@ -7,18 +8,29 @@ interface ApiResponse<T> {
   timestamp: string;
 }
 
-function getToken(): string | null {
+export function getToken(): string | null {
   if (typeof window === 'undefined') return null;
-  return localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  const expiresAt = Number(localStorage.getItem('tokenExpiresAt'));
+
+  if (!token) return null;
+  if (!expiresAt || Date.now() >= expiresAt) {
+    setToken(null);
+    return null;
+  }
+
+  return token;
 }
 
 export function setToken(token: string | null) {
   if (typeof window === 'undefined') return;
   if (token) {
     localStorage.setItem('token', token);
+    localStorage.setItem('tokenExpiresAt', String(Date.now() + SESSION_DURATION_MS));
     document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
   } else {
     localStorage.removeItem('token');
+    localStorage.removeItem('tokenExpiresAt');
     document.cookie = 'token=; path=/; max-age=0';
   }
 }
@@ -46,6 +58,14 @@ async function request<T>(
       signal: controller.signal,
     });
 
+    if (res.status === 401) {
+      setToken(null);
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+      throw new Error('Sesi telah berakhir, silakan login ulang');
+    }
+
     const json: ApiResponse<T> = await res.json();
 
     if (!res.ok || !json.success) {
@@ -53,6 +73,11 @@ async function request<T>(
     }
 
     return json.data;
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error('Request terlalu lama. Pastikan backend berjalan, lalu coba lagi.');
+    }
+    throw error;
   } finally {
     clearTimeout(timeout);
   }

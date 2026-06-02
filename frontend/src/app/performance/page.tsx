@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { api } from "@/lib/api"
 import Link from "next/link"
+import { toast } from "sonner"
 import { Loader2, AlertCircle, RefreshCw, Plus } from "lucide-react"
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -64,7 +65,7 @@ export default function PerformancePage() {
     try {
       const saved = localStorage.getItem("kpiWeights")
       if (saved) setKpiWeight(JSON.parse(saved))
-    } catch {}
+    } catch { }
   }, [])
 
   async function openCreate() {
@@ -88,7 +89,7 @@ export default function PerformancePage() {
       })
       setShowCreate(false)
       fetchData()
-    } catch { alert("Gagal menyimpan KPI") }
+    } catch { toast.error("Gagal menyimpan KPI") }
     finally { setSaving(false) }
   }
 
@@ -106,7 +107,6 @@ export default function PerformancePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Kinerja</h1>
-          <p className="text-muted-foreground">Performance management & 360° review</p>
         </div>
         <Button size="sm" onClick={openCreate}><Plus className="h-4 w-4 mr-1" /> Setup KPI</Button>
       </div>

@@ -1,4 +1,6 @@
-# AGENTS.md — HRIS AMM (CV Anugerah Mega Makmur)
+# AGENTS.md — Supplier SPK (CV Anugerah Mega Makmur)
+
+Aplikasi **Sistem Pendukung Keputusan (SPK)** untuk evaluasi dan seleksi supplier menggunakan metode SMART.
 
 ## Repo layout
 
@@ -50,33 +52,36 @@ npm run dev
 - **Swagger**: `http://localhost:4000/api/docs`
 - **Response shape**: all endpoints return `{ success: true, data, timestamp }` via a global interceptor
 
-### API endpoints
+### API endpoints (active)
 
 | Module | Base path | Key operations |
 |---|---|---|
 | **Auth** | `/api/auth` | `login`, `register`, `profile` |
 | **Users** | `/api/users` | CRUD, role update, password reset |
-| **Employees** | `/api/employees` | CRUD, search, stats, contract expiry |
-| **Departments** | `/api/departments` | CRUD, org tree |
-| **Positions** | `/api/positions` | CRUD, filter by department |
-| **Attendance** | `/api/attendance` | check-in/out, today/monthly summary |
-| **Leaves** | `/api/leaves` | CRUD, approve/reject, quota |
-| **Payroll** | `/api/payroll` | CRUD, monthly process, mark paid, summary |
-| **Performance** | `/api/performance` | CRUD, upsert per employee+period |
-| **Training** | `/api/training` | CRUD |
-| **Skills** | `/api/skills` | Skills CRUD, assign to employee |
-| **Recruitment** | `/api/recruitment` | CRUD, pipeline, SPK scoring |
-| **SPK** | `/api/spk` | promotion calc, early warnings, results history |
+| **SPK (Supplier)** | `/api/spk` | Supplier CRUD, supplier selection (SMART), results history |
 
-### SPK logic (in-app)
+> Sisa modul HRIS (employees, payroll, attendance, leaves, performance, training, skills, recruitment, departments, positions) masih ada di kode backend tetapi **tidak aktif** di frontend — hanya menyisakan Supplier SPK sebagai fitur utama.
 
-The NestJS SPK module implements SMART-based promotion scoring with 5 criteria (performance 40%, tenure 20%, skill match 20%, discipline 10%, 360 review 10%). A Python Flask microservice for advanced analytics is planned but not yet built.
+### SPK — Supplier Selection (SMART)
+
+Metode SMART dengan 5 kriteria:
+| Kriteria | Bobot |
+|---|---|
+| Harga | 30% |
+| Kualitas | 30% |
+| Pengiriman | 20% |
+| Layanan | 10% |
+| Kapasitas | 10% |
+| Bonus ongkos kirim (jika supplier cover) | +0.5 poin |
+
+Threshold default kelulusan: **7.5**.
 
 ### Database
 
 - PostgreSQL (required), Prisma migrations in `prisma/`
 - Redis configured via `REDIS_URL` env var (optional, for future caching)
-- 14 models matching the PRD ERD: `User`, `Employee`, `Department`, `Position`, `Document`, `Attendance`, `Leave`, `Payroll`, `Performance`, `Training`, `Skill`, `SkillMatrix`, `Recruitment`, `SpkResult`
+- Model utama: `Supplier`, `SpkResult`
+- Model HRIS legacy: `User`, `Employee`, `Department`, `Position`, `Document`, `Attendance`, `Leave`, `Payroll`, `Performance`, `Training`, `Skill`, `SkillMatrix`, `Recruitment`
 
 ### Conventions
 
@@ -85,26 +90,14 @@ The NestJS SPK module implements SMART-based promotion scoring with 5 criteria (
 - Decimal fields use Prisma `@db.Decimal` for precision
 - Timestamps are UTC ISO strings
 
-## Architecture (from PRD)
-
-Future layers not yet built:
-- **SPK Engine**: Python Flask microservice (pandas, scikit-learn) — for advanced AHP/ML
-- **PDF Engine**: Puppeteer/wkhtmltopdf — for payslip PDF generation
-- **Infrastructure**: Docker + Nginx reverse proxy; MinIO/S3 for document storage
-
 ## Modules
 
 | Modul | Frontend route | Backend API |
 |---|---|---|
 | Dashboard | `/` | — (aggregated stats) |
-| Data Karyawan | `/employees` | `/api/employees` |
-| Payroll | `/payroll` | `/api/payroll` |
-| Absensi | `/attendance` | `/api/attendance` |
-| Kinerja (KPI + 360°) | `/performance` | `/api/performance` |
-| Rekrutmen (ATS) | `/recruitment` | `/api/recruitment` |
-| Training & Skill Matrix | `/training` | `/api/training`, `/api/skills` |
-| SPK (SMART/AHP) | `/spk` | `/api/spk` |
-| Settings | `/settings` | `/api/users` |
+| Data Supplier | `/suppliers` | `/api/spk/suppliers` |
+| Evaluasi Supplier | `/spk` | `/api/spk/supplier-selection` |
+| Kriteria Penilaian | `/criteria` | — (static) |
 
 ## Conventions
 

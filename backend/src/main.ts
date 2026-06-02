@@ -9,14 +9,14 @@ export async function createApp() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : true,
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
   app.useGlobalFilters(new GlobalExceptionFilter());
   const config = new DocumentBuilder()
-    .setTitle('HRIS AMM API')
-    .setDescription('Human Resource Information System & Sistem Penunjang Keputusan — CV Anugerah Mega Makmur')
+    .setTitle('SPK Supplier API')
+    .setDescription('Sistem Pendukung Keputusan Pemilihan Supplier — CV Anugerah Mega Makmur')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

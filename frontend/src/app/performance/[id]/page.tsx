@@ -17,7 +17,7 @@ interface PerformanceRecord {
   totalScore: string
   grade: string | null
   notes: string | null
-  employee: { id: number; name: string; nik: string; department: { id: number; name: string } }
+  employee: { id: number; name: string; nik: string; department?: { id: number; name: string } | null }
 }
 
 const gradeVariant: Record<string, "success" | "warning" | "destructive" | "secondary"> = {
@@ -77,7 +77,7 @@ export default function PerformanceDetailPage() {
         <CardContent className="text-sm space-y-2">
           <div className="flex justify-between"><span className="text-muted-foreground">Nama</span><span className="font-medium">{data.employee.name}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">NIK</span><span>{data.employee.nik}</span></div>
-          <div className="flex justify-between"><span className="text-muted-foreground">Departemen</span><span>{data.employee.department.name}</span></div>
+          <div className="flex justify-between"><span className="text-muted-foreground">Departemen</span><span>{data.employee.department?.name ?? "-"}</span></div>
           <div className="flex justify-between"><span className="text-muted-foreground">Periode</span><span>{data.period}</span></div>
         </CardContent>
       </Card>

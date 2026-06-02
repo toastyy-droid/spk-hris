@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import Link from "next/link"
+import { toast } from "sonner"
 import { CheckCircle, XCircle, Clock, Loader2, AlertCircle, RefreshCw, LogIn, LogOut, Eye } from "lucide-react"
 import { api } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
@@ -93,7 +94,7 @@ export default function AttendancePage() {
   const [checkLoading, setCheckLoading] = useState(false)
   const [monthTab, setMonthTab] = useState(`${currentYear}-${String(currentMonth).padStart(2, "0")}`)
 
-  async function fetchData() {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     setError("")
     try {
@@ -122,9 +123,9 @@ export default function AttendancePage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [user?.employeeId])
 
-  useEffect(() => { fetchData() }, [user])
+  useEffect(() => { fetchData() }, [fetchData])
 
   async function handleCheckIn() {
     setCheckLoading(true)
@@ -133,7 +134,7 @@ export default function AttendancePage() {
       setTodayRecord(record)
       fetchData()
     } catch (e: unknown) {
-      alert((e as Error).message || "Gagal check-in")
+      toast.error((e as Error).message || "Gagal check-in")
     } finally {
       setCheckLoading(false)
     }
@@ -146,7 +147,7 @@ export default function AttendancePage() {
       setTodayRecord(record)
       fetchData()
     } catch (e: unknown) {
-      alert((e as Error).message || "Gagal check-out")
+      toast.error((e as Error).message || "Gagal check-out")
     } finally {
       setCheckLoading(false)
     }
@@ -157,7 +158,7 @@ export default function AttendancePage() {
     try {
       await api.patch(`/leaves/${id}/approve`, {})
       setLeaves((prev) => prev.map((l) => l.id === id ? { ...l, status: "APPROVED" } : l))
-    } catch { alert("Gagal approve cuti") }
+    } catch { toast.error("Gagal approve cuti") }
     finally { setActionLoading(null) }
   }
 
@@ -166,7 +167,7 @@ export default function AttendancePage() {
     try {
       await api.patch(`/leaves/${id}/reject`, {})
       setLeaves((prev) => prev.map((l) => l.id === id ? { ...l, status: "REJECTED" } : l))
-    } catch { alert("Gagal menolak cuti") }
+    } catch { toast.error("Gagal menolak cuti") }
     finally { setActionLoading(null) }
   }
 
@@ -192,7 +193,6 @@ export default function AttendancePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Absensi & Time Management</h1>
-          <p className="text-muted-foreground">Check-in/out, shift, cuti, dan izin</p>
         </div>
         {user?.employeeId && (
           <div className="flex gap-2">
