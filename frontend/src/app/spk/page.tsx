@@ -272,11 +272,6 @@ export default function SupplierEvaluationPage() {
                     <TableHead>Pengiriman</TableHead>
                     <TableHead>Layanan</TableHead>
                     <TableHead>Kapasitas</TableHead>
-                    <TableHead>n-Harga</TableHead>
-                    <TableHead>n-Kualitas</TableHead>
-                    <TableHead>n-Pengiriman</TableHead>
-                    <TableHead>n-Layanan</TableHead>
-                    <TableHead>n-Kapasitas</TableHead>
                     <TableHead>Bonus</TableHead>
                     <TableHead>Skor SAW</TableHead>
                     <TableHead>Rekomendasi</TableHead>
@@ -297,11 +292,6 @@ export default function SupplierEvaluationPage() {
                       <TableCell>{formatScore(supplier.deliveryScore, 1)}</TableCell>
                       <TableCell>{formatScore(supplier.serviceScore, 1)}</TableCell>
                       <TableCell>{formatScore(supplier.capacityScore, 1)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedPrice)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedQuality)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedDelivery)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedService)}</TableCell>
-                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedCapacity)}</TableCell>
                       <TableCell>
                         <Badge variant={supplier.shippingCoverage === "SUPPLIER_COVERS" ? "success" : "outline"}>
                           {shippingCoverageLabel(supplier.shippingCoverage)}
