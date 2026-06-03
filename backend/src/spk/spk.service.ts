@@ -205,7 +205,7 @@ export class SpkService {
     return { id };
   }
 
-  async supplierSelection(category?: string, threshold = 7.5, productBrand?: string) {
+  async supplierSelection(category?: string, threshold = 0.75, productBrand?: string) {
     const suppliers = await this.prisma.supplier.findMany({
       where: {
         status: 'ACTIVE',
@@ -234,8 +234,6 @@ export class SpkService {
       service: Math.max(...raw.map((r) => r.service)),
       capacity: Math.max(...raw.map((r) => r.capacity)),
     };
-
-    const thresholdScaled = threshold / 10;
 
     const results = suppliers
       .map((supplier, i) => {
@@ -267,7 +265,7 @@ export class SpkService {
           shippingCoverage: supplier.shippingCoverage,
           bonus: calc.bonus,
           totalScore: calc.total,
-          recommended: calc.total >= thresholdScaled,
+          recommended: calc.total >= threshold,
           rank: 0,
         };
       })
