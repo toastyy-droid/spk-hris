@@ -304,10 +304,10 @@ export default function SuppliersPage() {
                   <SelectTrigger id="shippingCoverage"><SelectValue placeholder="Pilih penanggung ongkir" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="BUYER_COVERS">Pembeli / Kita</SelectItem>
-                    <SelectItem value="SUPPLIER_COVERS">Supplier (+0.5 nilai)</SelectItem>
+                    <SelectItem value="SUPPLIER_COVERS">Supplier (+0.05 poin SAW)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">Jika ongkir ditanggung supplier, skor akhir mendapat nilai plus.</p>
+                <p className="text-xs text-muted-foreground">Jika ongkir ditanggung supplier, skor SAW mendapat tambahan 0.05.</p>
               </div>
             <div className="grid gap-4 md:grid-cols-5">
               {scoreFields.map((field) => (

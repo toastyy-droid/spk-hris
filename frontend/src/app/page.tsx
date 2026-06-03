@@ -174,8 +174,8 @@ export default function Dashboard() {
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-primary">{formatScore(bestSupplier.totalScore)}</div>
-                    <Badge variant={toNumber(bestSupplier.totalScore) >= 7.5 ? "success" : "secondary"}>
-                      {toNumber(bestSupplier.totalScore) >= 7.5 ? "Direkomendasikan" : "Perlu Review"}
+                    <Badge variant={toNumber(bestSupplier.totalScore) >= 0.75 ? "success" : "secondary"}>
+                      {toNumber(bestSupplier.totalScore) >= 0.75 ? "Direkomendasikan" : "Perlu Review"}
                     </Badge>
                   </div>
                 </div>

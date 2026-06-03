@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, ShippingCoverage } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma.service';
 import { CreateSupplierDto, UpdateSupplierDto } from './dto/create-spk.dto';
 
@@ -7,50 +7,59 @@ import { CreateSupplierDto, UpdateSupplierDto } from './dto/create-spk.dto';
 export class SpkService {
   constructor(private prisma: PrismaService) {}
 
-  private scoreValue(score: unknown) {
-    const value = Number(score);
-    return value > 10 ? Math.round(value) / 10 : value;
-  }
+  private readonly WEIGHTS = { price: 0.3, quality: 0.3, delivery: 0.2, service: 0.1, capacity: 0.1 };
+  private readonly COST_CRITERIA = ['price'];
+  private readonly BENEFIT_CRITERIA = ['quality', 'delivery', 'service', 'capacity'];
 
-  private calculateSupplierScore(supplier: {
-    priceScore: unknown;
-    qualityScore: unknown;
-    deliveryScore: unknown;
-    serviceScore: unknown;
-    capacityScore: unknown;
-    shippingCoverage?: ShippingCoverage | string;
-  }) {
-    let bonus = 0;
-    if (supplier.shippingCoverage === 'SUPPLIER_COVERS') {
-      bonus = 0.5;
+  private sawNormalizeAndScore(
+    raw: { price: number; quality: number; delivery: number; service: number; capacity: number },
+    minPrice: number,
+    maxValues: { quality: number; delivery: number; service: number; capacity: number },
+    hasBonus: boolean,
+  ) {
+    const normalized = {
+      price: minPrice / raw.price,
+      quality: raw.quality / maxValues.quality,
+      delivery: raw.delivery / maxValues.delivery,
+      service: raw.service / maxValues.service,
+      capacity: raw.capacity / maxValues.capacity,
+    };
+
+    let total =
+      normalized.price * this.WEIGHTS.price +
+      normalized.quality * this.WEIGHTS.quality +
+      normalized.delivery * this.WEIGHTS.delivery +
+      normalized.service * this.WEIGHTS.service +
+      normalized.capacity * this.WEIGHTS.capacity;
+
+    if (hasBonus) {
+      total += 0.05;
     }
-    const total =
-      this.scoreValue(supplier.priceScore) * 0.3 +
-      this.scoreValue(supplier.qualityScore) * 0.3 +
-      this.scoreValue(supplier.deliveryScore) * 0.2 +
-      this.scoreValue(supplier.serviceScore) * 0.1 +
-      this.scoreValue(supplier.capacityScore) * 0.1 +
-      bonus;
 
-    return Math.round(total * 100) / 100;
+    return {
+      normalized,
+      total: Math.round(total * 10000) / 10000,
+      bonus: hasBonus ? 0.05 : 0,
+    };
   }
 
   private supplierPayload(data: CreateSupplierDto): Prisma.SupplierCreateInput {
     return {
-      ...data,
-      priceScore: this.scoreValue(data.priceScore),
-      qualityScore: this.scoreValue(data.qualityScore),
-      deliveryScore: this.scoreValue(data.deliveryScore),
-      serviceScore: this.scoreValue(data.serviceScore),
-      capacityScore: this.scoreValue(data.capacityScore),
-      totalScore:
-        data.priceScore !== undefined &&
-        data.qualityScore !== undefined &&
-        data.deliveryScore !== undefined &&
-        data.serviceScore !== undefined &&
-        data.capacityScore !== undefined
-          ? this.calculateSupplierScore(data)
-          : undefined,
+      name: data.name,
+      category: data.category,
+      productBrand: data.productBrand,
+      contactPerson: data.contactPerson,
+      phone: data.phone,
+      address: data.address,
+      priceScore: data.priceScore,
+      qualityScore: data.qualityScore,
+      deliveryScore: data.deliveryScore,
+      serviceScore: data.serviceScore,
+      capacityScore: data.capacityScore,
+      shippingCoverage: data.shippingCoverage,
+      status: data.status,
+      notes: data.notes,
+      totalScore: undefined,
     };
   }
 
@@ -161,12 +170,12 @@ export class SpkService {
 
     return suppliers.map((supplier) => ({
       ...supplier,
-      priceScore: this.scoreValue(supplier.priceScore),
-      qualityScore: this.scoreValue(supplier.qualityScore),
-      deliveryScore: this.scoreValue(supplier.deliveryScore),
-      serviceScore: this.scoreValue(supplier.serviceScore),
-      capacityScore: this.scoreValue(supplier.capacityScore),
-      totalScore: supplier.totalScore === null ? null : this.scoreValue(supplier.totalScore),
+      priceScore: Number(supplier.priceScore),
+      qualityScore: Number(supplier.qualityScore),
+      deliveryScore: Number(supplier.deliveryScore),
+      serviceScore: Number(supplier.serviceScore),
+      capacityScore: Number(supplier.capacityScore),
+      totalScore: supplier.totalScore === null ? null : Number(supplier.totalScore),
     }));
   }
 
@@ -180,25 +189,11 @@ export class SpkService {
     const existing = await this.prisma.supplier.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Supplier not found');
 
-    const merged = {
-      priceScore: data.priceScore ?? Number(existing.priceScore),
-      qualityScore: data.qualityScore ?? Number(existing.qualityScore),
-      deliveryScore: data.deliveryScore ?? Number(existing.deliveryScore),
-      serviceScore: data.serviceScore ?? Number(existing.serviceScore),
-      capacityScore: data.capacityScore ?? Number(existing.capacityScore),
-      shippingCoverage: data.shippingCoverage ?? existing.shippingCoverage,
-    };
-
     return this.prisma.supplier.update({
       where: { id },
       data: {
         ...data,
-        ...(data.priceScore !== undefined ? { priceScore: this.scoreValue(data.priceScore) } : {}),
-        ...(data.qualityScore !== undefined ? { qualityScore: this.scoreValue(data.qualityScore) } : {}),
-        ...(data.deliveryScore !== undefined ? { deliveryScore: this.scoreValue(data.deliveryScore) } : {}),
-        ...(data.serviceScore !== undefined ? { serviceScore: this.scoreValue(data.serviceScore) } : {}),
-        ...(data.capacityScore !== undefined ? { capacityScore: this.scoreValue(data.capacityScore) } : {}),
-        totalScore: this.calculateSupplierScore(merged),
+        totalScore: null,
       },
     });
   }
@@ -219,9 +214,39 @@ export class SpkService {
       },
     });
 
+    if (suppliers.length === 0) {
+      return { threshold, weights: this.WEIGHTS, criterionType: { ...this.COST_CRITERIA.reduce((a, c) => ({ ...a, [c]: 'cost' }), {}), ...this.BENEFIT_CRITERIA.reduce((a, c) => ({ ...a, [c]: 'benefit' }), {}) }, suppliers: [] };
+    }
+
+    const raw = suppliers.map((s) => ({
+      id: s.id,
+      price: Number(s.priceScore) / 10,
+      quality: Number(s.qualityScore) / 10,
+      delivery: Number(s.deliveryScore) / 10,
+      service: Number(s.serviceScore) / 10,
+      capacity: Number(s.capacityScore) / 10,
+    }));
+
+    const minPrice = Math.min(...raw.map((r) => r.price));
+    const maxValues = {
+      quality: Math.max(...raw.map((r) => r.quality)),
+      delivery: Math.max(...raw.map((r) => r.delivery)),
+      service: Math.max(...raw.map((r) => r.service)),
+      capacity: Math.max(...raw.map((r) => r.capacity)),
+    };
+
+    const thresholdScaled = threshold / 10;
+
     const results = suppliers
-      .map((supplier) => {
-        const totalScore = this.calculateSupplierScore(supplier);
+      .map((supplier, i) => {
+        const r = raw[i];
+        const calc = this.sawNormalizeAndScore(
+          r,
+          minPrice,
+          maxValues,
+          supplier.shippingCoverage === 'SUPPLIER_COVERS',
+        );
+
         return {
           supplierId: supplier.id,
           name: supplier.name,
@@ -229,15 +254,20 @@ export class SpkService {
           productBrand: supplier.productBrand,
           contactPerson: supplier.contactPerson,
           phone: supplier.phone,
-          priceScore: this.scoreValue(supplier.priceScore),
-          qualityScore: this.scoreValue(supplier.qualityScore),
-          deliveryScore: this.scoreValue(supplier.deliveryScore),
-          serviceScore: this.scoreValue(supplier.serviceScore),
-          capacityScore: this.scoreValue(supplier.capacityScore),
+          priceScore: Number(supplier.priceScore),
+          qualityScore: Number(supplier.qualityScore),
+          deliveryScore: Number(supplier.deliveryScore),
+          serviceScore: Number(supplier.serviceScore),
+          capacityScore: Number(supplier.capacityScore),
+          normalizedPrice: Math.round(calc.normalized.price * 10000) / 10000,
+          normalizedQuality: Math.round(calc.normalized.quality * 10000) / 10000,
+          normalizedDelivery: Math.round(calc.normalized.delivery * 10000) / 10000,
+          normalizedService: Math.round(calc.normalized.service * 10000) / 10000,
+          normalizedCapacity: Math.round(calc.normalized.capacity * 10000) / 10000,
           shippingCoverage: supplier.shippingCoverage,
-          shippingBonus: supplier.shippingCoverage === 'SUPPLIER_COVERS' ? 0.5 : 0,
-          totalScore,
-          recommended: totalScore >= threshold,
+          bonus: calc.bonus,
+          totalScore: calc.total,
+          recommended: calc.total >= thresholdScaled,
           rank: 0,
         };
       })
@@ -286,7 +316,20 @@ export class SpkService {
       return { ...result, resultId: saved?.id, status };
     });
 
-    return { threshold, weights: { price: 30, quality: 30, delivery: 20, service: 10, capacity: 10, shippingBonus: 0.5 }, suppliers: suppliersWithResultId };
+    const criterionType = {
+      price: 'cost',
+      quality: 'benefit',
+      delivery: 'benefit',
+      service: 'benefit',
+      capacity: 'benefit',
+    };
+
+    return {
+      threshold,
+      weights: this.WEIGHTS,
+      criterionType,
+      suppliers: suppliersWithResultId,
+    };
   }
 
   async earlyWarnings() {

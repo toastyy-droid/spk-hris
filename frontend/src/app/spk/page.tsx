@@ -39,15 +39,20 @@ interface SupplierResult {
   deliveryScore: number
   serviceScore: number
   capacityScore: number
+  normalizedPrice: number
+  normalizedQuality: number
+  normalizedDelivery: number
+  normalizedService: number
+  normalizedCapacity: number
   shippingCoverage: "SUPPLIER_COVERS" | "BUYER_COVERS"
-  shippingBonus: number
+  bonus: number
   totalScore: number
   recommended: boolean
   status?: string
 }
 
 function shippingCoverageLabel(value: SupplierResult["shippingCoverage"]) {
-  return value === "SUPPLIER_COVERS" ? "Supplier (+0.5)" : "Pembeli"
+  return value === "SUPPLIER_COVERS" ? "Supplier (+0.05)" : "Pembeli"
 }
 
 function toNumber(value: number | string | null | undefined) {
@@ -55,8 +60,8 @@ function toNumber(value: number | string | null | undefined) {
   return Number(value)
 }
 
-function formatScore(value: number | string | null | undefined) {
-  return toNumber(value).toFixed(2).replace(/\.00$/, "")
+function formatScore(value: number | string | null | undefined, decimals = 4) {
+  return toNumber(value).toFixed(decimals).replace(/\.?0+$/, "")
 }
 
 export default function SupplierEvaluationPage() {
@@ -69,7 +74,7 @@ export default function SupplierEvaluationPage() {
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState(false)
   const [actionId, setActionId] = useState<number | null>(null)
-  const [threshold, setThreshold] = useState("7.5")
+  const [threshold, setThreshold] = useState("0.75")
   const [categoryFilter, setCategoryFilter] = useState("")
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
@@ -112,8 +117,8 @@ export default function SupplierEvaluationPage() {
 
   async function runSelection() {
     const thresholdValue = Number(threshold)
-    if (!Number.isFinite(thresholdValue) || thresholdValue < 1 || thresholdValue > 10) {
-      setError("Threshold harus berupa angka 1 sampai 10.")
+    if (!Number.isFinite(thresholdValue) || thresholdValue < 0.1 || thresholdValue > 1) {
+      setError("Threshold harus berupa angka 0.1 sampai 1.")
       setMessage("")
       return
     }
@@ -129,8 +134,8 @@ export default function SupplierEvaluationPage() {
       })
       setResults(data.suppliers ?? [])
       const recommended = data.suppliers.filter((supplier) => supplier.recommended).length
-      setMessage(`Perhitungan selesai: ${data.suppliers.length} supplier dinilai, ${recommended} direkomendasikan.`)
-      pushNotification("Evaluasi Supplier", `Perhitungan selesai dengan threshold ${data.threshold}`)
+      setMessage(`Perhitungan SAW selesai: ${data.suppliers.length} supplier dinilai, ${recommended} direkomendasikan.`)
+      pushNotification("Evaluasi Supplier", `Perhitungan SAW selesai dengan threshold ${data.threshold}`)
       await loadSuppliers(categoryFilter, "", false)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Gagal menjalankan evaluasi supplier.")
@@ -203,7 +208,7 @@ export default function SupplierEvaluationPage() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Proses Evaluasi</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Proses Evaluasi (Metode SAW)</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-3 md:grid-cols-[1fr_160px_auto_auto] md:items-end">
             <div className="space-y-2">
@@ -219,8 +224,8 @@ export default function SupplierEvaluationPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="threshold">Threshold</Label>
-              <Input id="threshold" type="number" min="1" max="10" step="0.1" value={threshold} onChange={(event) => setThreshold(event.target.value)} />
+              <Label htmlFor="threshold">Threshold (0-1)</Label>
+              <Input id="threshold" type="number" min="0.1" max="1" step="0.05" value={threshold} onChange={(event) => setThreshold(event.target.value)} />
             </div>
             <Button variant="outline" onClick={() => loadSuppliers(categoryFilter, "")} disabled={loading}>
               <RefreshCw className="mr-2 h-4 w-4" /> Muat Data
@@ -229,6 +234,11 @@ export default function SupplierEvaluationPage() {
               {running ? "Memproses..." : "Jalankan Evaluasi"}
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Metode SAW (Simple Additive Weighting). Harga = kriteria Cost, sisanya = Benefit.
+            Normalisasi: Cost = min/x, Benefit = x/max. Bobot: Harga 30%, Kualitas 30%, Pengiriman 20%, Layanan 10%, Kapasitas 10%.
+            Bonus ongkir +0.05 jika supplier menanggung biaya kirim.
+          </p>
           {!loading && suppliers.length === 0 && (
             <p className="text-sm text-muted-foreground">Tidak ada supplier aktif yang cocok dengan filter ini.</p>
           )}
@@ -236,74 +246,86 @@ export default function SupplierEvaluationPage() {
           {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
           {bestSupplier && (
             <div className="rounded-lg border bg-muted/40 p-4 text-sm">
-              Supplier terbaik saat ini adalah <span className="font-semibold">{bestSupplier.name}</span> dengan skor <span className="font-semibold">{formatScore(bestSupplier.totalScore)}</span>.
+              Supplier terbaik saat ini adalah <span className="font-semibold">{bestSupplier.name}</span> dengan skor SAW <span className="font-semibold">{formatScore(bestSupplier.totalScore)}</span>.
             </div>
           )}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Ranking Hasil Evaluasi</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Ranking Hasil Evaluasi SAW</CardTitle></CardHeader>
         <CardContent>
           {results.length === 0 ? (
             <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
               <AlertTriangle className="h-4 w-4" /> Belum ada hasil. Jalankan evaluasi untuk membuat ranking supplier.
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>#</TableHead>
-                  <TableHead>Supplier</TableHead>
-                  <TableHead>Jenis Aksesoris HP</TableHead>
-                  <TableHead>Harga</TableHead>
-                  <TableHead>Kualitas</TableHead>
-                  <TableHead>Pengiriman</TableHead>
-                  <TableHead>Layanan</TableHead>
-                  <TableHead>Kapasitas</TableHead>
-                  <TableHead>Ongkir</TableHead>
-                  <TableHead>Skor</TableHead>
-                  <TableHead>Rekomendasi</TableHead>
-                  <TableHead></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {results.map((supplier) => (
-                  <TableRow key={supplier.supplierId}>
-                    <TableCell className="font-bold">{supplier.rank}</TableCell>
-                    <TableCell>
-                      <div className="font-medium">{supplier.name}</div>
-                      <div className="text-xs text-muted-foreground">{supplier.contactPerson || supplier.phone || "-"}</div>
-                    </TableCell>
-                    <TableCell>{supplier.category}</TableCell>
-                    <TableCell>{formatScore(supplier.priceScore)}</TableCell>
-                    <TableCell>{formatScore(supplier.qualityScore)}</TableCell>
-                    <TableCell>{formatScore(supplier.deliveryScore)}</TableCell>
-                    <TableCell>{formatScore(supplier.serviceScore)}</TableCell>
-                    <TableCell>{formatScore(supplier.capacityScore)}</TableCell>
-                    <TableCell>
-                      <Badge variant={supplier.shippingCoverage === "SUPPLIER_COVERS" ? "success" : "outline"}>
-                        {shippingCoverageLabel(supplier.shippingCoverage)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-lg font-bold">{formatScore(supplier.totalScore)}</TableCell>
-                    <TableCell>
-                      <Badge variant={supplier.recommended ? "success" : "secondary"}>{supplier.recommended ? "Direkomendasikan" : "Tidak"}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {supplier.status === "APPROVED" || supplier.status === "REJECTED" ? (
-                        <Badge variant={supplier.status === "APPROVED" ? "success" : "warning"}>{supplier.status === "APPROVED" ? "Disetujui" : "Ditunda"}</Badge>
-                      ) : canManage ? (
-                        <div className="flex gap-2">
-                          <Button size="sm" disabled={actionId === supplier.resultId} onClick={() => updateResultStatus(supplier.resultId, "APPROVED")}>Approve</Button>
-                          <Button size="sm" variant="outline" disabled={actionId === supplier.resultId} onClick={() => updateResultStatus(supplier.resultId, "REJECTED")}>Tunda</Button>
-                        </div>
-                      ) : null}
-                    </TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>#</TableHead>
+                    <TableHead>Supplier</TableHead>
+                    <TableHead>Jenis</TableHead>
+                    <TableHead>Harga</TableHead>
+                    <TableHead>Kualitas</TableHead>
+                    <TableHead>Pengiriman</TableHead>
+                    <TableHead>Layanan</TableHead>
+                    <TableHead>Kapasitas</TableHead>
+                    <TableHead>n-Harga</TableHead>
+                    <TableHead>n-Kualitas</TableHead>
+                    <TableHead>n-Pengiriman</TableHead>
+                    <TableHead>n-Layanan</TableHead>
+                    <TableHead>n-Kapasitas</TableHead>
+                    <TableHead>Bonus</TableHead>
+                    <TableHead>Skor SAW</TableHead>
+                    <TableHead>Rekomendasi</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {results.map((supplier) => (
+                    <TableRow key={supplier.supplierId}>
+                      <TableCell className="font-bold">{supplier.rank}</TableCell>
+                      <TableCell>
+                        <div className="font-medium">{supplier.name}</div>
+                        <div className="text-xs text-muted-foreground">{supplier.contactPerson || supplier.phone || "-"}</div>
+                      </TableCell>
+                      <TableCell>{supplier.category}</TableCell>
+                      <TableCell>{formatScore(supplier.priceScore, 1)}</TableCell>
+                      <TableCell>{formatScore(supplier.qualityScore, 1)}</TableCell>
+                      <TableCell>{formatScore(supplier.deliveryScore, 1)}</TableCell>
+                      <TableCell>{formatScore(supplier.serviceScore, 1)}</TableCell>
+                      <TableCell>{formatScore(supplier.capacityScore, 1)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedPrice)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedQuality)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedDelivery)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedService)}</TableCell>
+                      <TableCell className="text-xs text-muted-foreground">{formatScore(supplier.normalizedCapacity)}</TableCell>
+                      <TableCell>
+                        <Badge variant={supplier.shippingCoverage === "SUPPLIER_COVERS" ? "success" : "outline"}>
+                          {shippingCoverageLabel(supplier.shippingCoverage)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-lg font-bold">{formatScore(supplier.totalScore)}</TableCell>
+                      <TableCell>
+                        <Badge variant={supplier.recommended ? "success" : "secondary"}>{supplier.recommended ? "Direkomendasikan" : "Tidak"}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        {supplier.status === "APPROVED" || supplier.status === "REJECTED" ? (
+                          <Badge variant={supplier.status === "APPROVED" ? "success" : "warning"}>{supplier.status === "APPROVED" ? "Disetujui" : "Ditunda"}</Badge>
+                        ) : canManage ? (
+                          <div className="flex gap-2">
+                            <Button size="sm" disabled={actionId === supplier.resultId} onClick={() => updateResultStatus(supplier.resultId, "APPROVED")}>Approve</Button>
+                            <Button size="sm" variant="outline" disabled={actionId === supplier.resultId} onClick={() => updateResultStatus(supplier.resultId, "REJECTED")}>Tunda</Button>
+                          </div>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

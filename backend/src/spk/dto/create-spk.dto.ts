@@ -20,8 +20,8 @@ export class RunSupplierSelectionDto {
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  @Min(1)
-  @Max(10)
+  @Min(0.1)
+  @Max(1)
   threshold?: number;
 
   @IsOptional()
@@ -59,31 +59,31 @@ export class CreateSupplierDto {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   priceScore: number;
 
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   qualityScore: number;
 
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   deliveryScore: number;
 
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   serviceScore: number;
 
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   capacityScore: number;
 
   @IsOptional()
@@ -128,35 +128,35 @@ export class UpdateSupplierDto {
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   priceScore?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   qualityScore?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   deliveryScore?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   serviceScore?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(1)
-  @Max(100)
+  @Max(10)
   capacityScore?: number;
 
   @IsOptional()
