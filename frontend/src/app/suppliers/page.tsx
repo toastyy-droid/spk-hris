@@ -108,7 +108,6 @@ function supplierToForm(supplier: Supplier): SupplierForm {
 function formPayload(form: SupplierForm) {
   return {
     ...form,
-    productBrand: "",
     priceScore: Number(form.priceScore),
     qualityScore: Number(form.qualityScore),
     deliveryScore: Number(form.deliveryScore),
@@ -234,6 +233,8 @@ export default function SuppliersPage() {
                   <TableHead>Harga</TableHead>
                   <TableHead>Kualitas</TableHead>
                   <TableHead>Pengiriman</TableHead>
+                  <TableHead>Layanan</TableHead>
+                  <TableHead>Kapasitas</TableHead>
                   <TableHead>Ongkir</TableHead>
                   <TableHead>Skor</TableHead>
                   <TableHead>Status</TableHead>
@@ -249,6 +250,8 @@ export default function SuppliersPage() {
                     <TableCell>{formatScore(supplier.priceScore)}</TableCell>
                     <TableCell>{formatScore(supplier.qualityScore)}</TableCell>
                     <TableCell>{formatScore(supplier.deliveryScore)}</TableCell>
+                    <TableCell>{formatScore(supplier.serviceScore)}</TableCell>
+                    <TableCell>{formatScore(supplier.capacityScore)}</TableCell>
                     <TableCell>
                       <Badge variant={supplier.shippingCoverage === "SUPPLIER_COVERS" ? "success" : "outline"}>
                         {shippingCoverageLabel(supplier.shippingCoverage)}
@@ -321,7 +324,13 @@ export default function SuppliersPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
-                <Input id="status" value={form.status} onChange={(event) => setForm({ ...form, status: event.target.value.toUpperCase() })} placeholder="ACTIVE" />
+                <Select value={form.status} onValueChange={(value: string) => setForm({ ...form, status: value })}>
+                  <SelectTrigger id="status"><SelectValue placeholder="Pilih status" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ACTIVE">Active</SelectItem>
+                    <SelectItem value="INACTIVE">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="notes">Catatan</Label>
