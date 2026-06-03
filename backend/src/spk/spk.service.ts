@@ -208,7 +208,7 @@ export class SpkService {
   async supplierSelection(category?: string, threshold = 0.75, productBrand?: string) {
     const suppliers = await this.prisma.supplier.findMany({
       where: {
-        status: 'ACTIVE',
+        status: { in: ['ACTIVE', 'RECOMMENDED'] },
         ...(category ? { category: { contains: category, mode: 'insensitive' as const } } : {}),
         ...(productBrand ? { productBrand: { contains: productBrand, mode: 'insensitive' as const } } : {}),
       },
