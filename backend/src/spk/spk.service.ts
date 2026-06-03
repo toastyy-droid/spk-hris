@@ -301,12 +301,16 @@ export class SpkService {
         });
         existingMap.set(result.supplierId, created);
       }
-
-      await this.prisma.supplier.update({
-        where: { id: result.supplierId },
-        data: { totalScore: result.totalScore },
-      });
     }
+
+    await this.prisma.$transaction(
+      results.map((result) =>
+        this.prisma.supplier.update({
+          where: { id: result.supplierId },
+          data: { totalScore: result.totalScore },
+        }),
+      ),
+    );
 
     const suppliersWithResultId = results.map((result) => {
       const saved = existingMap.get(result.supplierId);
