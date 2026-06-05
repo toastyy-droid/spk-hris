@@ -1,0 +1,40 @@
+body {
+  font-family: "Times New Roman", Times, serif;
+  font-size: 12pt;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Times New Roman", Times, serif;
+  page-break-after: avoid;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10pt;
+}
+
+th, td {
+  border: 1px solid #999;
+  padding: 6px;
+  vertical-align: top;
+}
+
+pre, code {
+  font-family: "Courier New", monospace;
+  font-size: 9.5pt;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  margin: 12px auto;
+  border: 1px solid #ddd;
+}
+
+blockquote {
+  border-left: 4px solid #999;
+  padding-left: 12px;
+  color: #333;
+}
