@@ -101,12 +101,19 @@ function calculateScores() {
 
   return raw.map((item, index) => {
     const supplier = supplierData[index];
+    const normalized = {
+      price: round4(minPrice / item.price),
+      quality: round4(item.quality / maxQuality),
+      delivery: round4(item.delivery / maxDelivery),
+      service: round4(item.service / maxService),
+      capacity: round4(item.capacity / maxCapacity),
+    };
     const total =
-      round4((minPrice / item.price) * 0.3) +
-      round4((item.quality / maxQuality) * 0.3) +
-      round4((item.delivery / maxDelivery) * 0.2) +
-      round4((item.service / maxService) * 0.1) +
-      round4((item.capacity / maxCapacity) * 0.1) +
+      round4(normalized.price * 0.3) +
+      round4(normalized.quality * 0.3) +
+      round4(normalized.delivery * 0.2) +
+      round4(normalized.service * 0.1) +
+      round4(normalized.capacity * 0.1) +
       (supplier.shippingCoverage === ShippingCoverage.SUPPLIER_COVERS ? 0.05 : 0);
 
     return round4(total);

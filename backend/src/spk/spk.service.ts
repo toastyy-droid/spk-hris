@@ -22,11 +22,11 @@ export class SpkService {
     hasBonus: boolean,
   ) {
     const normalized = {
-      price: minPrice / raw.price,
-      quality: raw.quality / maxValues.quality,
-      delivery: raw.delivery / maxValues.delivery,
-      service: raw.service / maxValues.service,
-      capacity: raw.capacity / maxValues.capacity,
+      price: this.round4(minPrice / raw.price),
+      quality: this.round4(raw.quality / maxValues.quality),
+      delivery: this.round4(raw.delivery / maxValues.delivery),
+      service: this.round4(raw.service / maxValues.service),
+      capacity: this.round4(raw.capacity / maxValues.capacity),
     };
 
     let total =
