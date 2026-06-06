@@ -24,21 +24,6 @@ interface Supplier {
   status: string
 }
 
-interface SpkResult {
-  id: number
-  type: string
-  referenceId: number | null
-  score: number | string
-  rank: number | null
-  details?: {
-    name?: string
-    category?: string
-    recommended?: boolean
-    status?: string
-    totalScore?: number
-  } | null
-}
-
 function Skeleton({ className }: { className?: string }) {
   return <div className={`animate-pulse rounded bg-muted ${className ?? ""}`} />
 }
@@ -54,7 +39,6 @@ function formatScore(value: number | string | null | undefined) {
 
 export default function Dashboard() {
   const [suppliers, setSuppliers] = useState<Supplier[] | null>(null)
-  const [results, setResults] = useState<SpkResult[] | null>(null)
   const [error, setError] = useState("")
 
   useEffect(() => {
@@ -63,13 +47,9 @@ export default function Dashboard() {
     async function load() {
       setError("")
       try {
-        const [supplierData, resultData] = await Promise.all([
-          api.get<Supplier[]>("/spk/suppliers"),
-          api.get<SpkResult[]>("/spk/results?type=SUPPLIER_SELECTION"),
-        ])
+        const supplierData = await api.get<Supplier[]>("/spk/suppliers")
         if (!alive) return
         setSuppliers(supplierData)
-        setResults(resultData)
       } catch {
         if (alive) setError("Gagal memuat dashboard supplier. Pastikan backend berjalan dan akun memiliki akses evaluasi supplier.")
       }
@@ -85,10 +65,7 @@ export default function Dashboard() {
     ? suppliers.reduce((total, supplier) => total + toNumber(supplier.totalScore), 0) / suppliers.length
     : 0
 
-  const latestResults = (results ?? [])
-    .filter((result) => result.type === "SUPPLIER_SELECTION")
-    .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
-  const recommendedResults = latestResults.filter((result) => result.details?.recommended)
+  const recommendedSuppliers = (suppliers ?? []).filter((supplier) => toNumber(supplier.totalScore) >= 0.75)
   const categoryCounts = (suppliers ?? []).reduce<Record<string, number>>((acc, supplier) => {
     acc[supplier.category] = (acc[supplier.category] ?? 0) + 1
     return acc
@@ -141,8 +118,8 @@ export default function Dashboard() {
             <Award className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{results ? recommendedResults.length : <Skeleton className="h-8 w-16" />}</div>
-            <p className="mt-1 text-xs text-muted-foreground">Dari hasil evaluasi terakhir</p>
+            <div className="text-2xl font-bold text-yellow-600">{suppliers ? recommendedSuppliers.length : <Skeleton className="h-8 w-16" />}</div>
+            <p className="mt-1 text-xs text-muted-foreground">Berdasarkan supplier aktif</p>
           </CardContent>
         </Card>
 
