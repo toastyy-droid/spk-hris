@@ -22,7 +22,7 @@ const suppliers: SupplierSeed[] = [
   {
     name: 'Pontianak Mobile Grosir',
     category: 'Charger',
-    productBrand: 'Fast Charger',
+    productBrand: 'Baseus',
     contactPerson: 'Andi Saputra',
     phone: '0812-5600-1101',
     address: 'Jl. Gajah Mada, Pontianak Kota, Kalimantan Barat',
@@ -36,7 +36,7 @@ const suppliers: SupplierSeed[] = [
   {
     name: 'Khatulistiwa Gadget Supply',
     category: 'Kabel Data',
-    productBrand: 'Kabel Type-C',
+    productBrand: 'Ugreen',
     contactPerson: 'Rina Oktaviani',
     phone: '0813-4500-2202',
     address: 'Jl. Ahmad Yani, Pontianak Selatan, Kalimantan Barat',
@@ -79,7 +79,7 @@ const suppliers: SupplierSeed[] = [
   {
     name: 'Equator Phone Parts',
     category: 'Sparepart Aksesori',
-    productBrand: 'OEM',
+    productBrand: 'Nillkin',
     contactPerson: 'Maya Sari',
     phone: '0812-5700-5505',
     address: 'Jl. HOS Cokroaminoto, Pontianak Kota, Kalimantan Barat',
@@ -93,7 +93,7 @@ const suppliers: SupplierSeed[] = [
   {
     name: 'Mega Jaya Cellular Pontianak',
     category: 'Case',
-    productBrand: 'Softcase',
+    productBrand: 'Nillkin',
     contactPerson: 'Hendra Wijaya',
     phone: '0822-5100-6606',
     address: 'Jl. Sultan Abdurrahman, Pontianak Kota, Kalimantan Barat',
@@ -135,7 +135,7 @@ const suppliers: SupplierSeed[] = [
   {
     name: 'Nusantara Audio Gadget',
     category: 'Audio & Wearable',
-    productBrand: 'Anker',
+    productBrand: 'Soundcore',
     contactPerson: 'Putri Lestari',
     phone: '0811-5600-9909',
     address: 'Jl. Imam Bonjol, Pontianak Tenggara, Kalimantan Barat',
@@ -163,7 +163,7 @@ const suppliers: SupplierSeed[] = [
   {
     name: 'Sentra Aksesori Kalbar',
     category: 'Pelindung Layar',
-    productBrand: 'Tempered Glass',
+    productBrand: 'Mocolo',
     contactPerson: 'Ari Wibowo',
     phone: '0812-5400-1112',
     address: 'Jl. Teuku Umar, Pontianak Kota, Kalimantan Barat',
@@ -177,7 +177,7 @@ const suppliers: SupplierSeed[] = [
   {
     name: 'Pontianak Aksesori Center Supply',
     category: 'Charger',
-    productBrand: 'Charger Wireless',
+    productBrand: 'Anker',
     contactPerson: 'Lina Marlina',
     phone: '0813-5500-1213',
     address: 'Jl. Pahlawan, Pontianak Selatan, Kalimantan Barat',

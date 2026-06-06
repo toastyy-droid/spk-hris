@@ -229,6 +229,7 @@ export default function SuppliersPage() {
                 <TableRow>
                   <TableHead>Nama</TableHead>
                   <TableHead>Jenis Aksesoris HP</TableHead>
+                  <TableHead>Brand</TableHead>
                   <TableHead>Kontak</TableHead>
                   <TableHead>Harga</TableHead>
                   <TableHead>Kualitas</TableHead>
@@ -246,6 +247,7 @@ export default function SuppliersPage() {
                   <TableRow key={supplier.id}>
                     <TableCell className="font-medium">{supplier.name}</TableCell>
                     <TableCell>{supplier.category}</TableCell>
+                    <TableCell>{supplier.productBrand || "-"}</TableCell>
                     <TableCell>{supplier.contactPerson || supplier.phone || "-"}</TableCell>
                     <TableCell>{formatScore(supplier.priceScore)}</TableCell>
                     <TableCell>{formatScore(supplier.qualityScore)}</TableCell>
@@ -287,6 +289,10 @@ export default function SuppliersPage() {
               <div className="space-y-2">
                 <Label htmlFor="category">Jenis Aksesoris HP</Label>
                 <Input id="category" value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })} placeholder="Contoh: Charger, Kabel Data, Earphone" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="productBrand">Brand Produk</Label>
+                <Input id="productBrand" value={form.productBrand} onChange={(event) => setForm({ ...form, productBrand: event.target.value })} placeholder="Contoh: Baseus, Soundcore, Anker" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contactPerson">PIC</Label>

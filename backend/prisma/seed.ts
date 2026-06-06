@@ -27,21 +27,21 @@ async function main() {
   const categories = ['Charger', 'Kabel Data', 'Audio', 'Pelindung Layar', 'Powerbank'];
 
   const supplierData = [
-    { name: 'PT Teknologi Maju', category: 'Charger', productBrand: 'Fast Charger', contactPerson: 'Andi Wijaya', phone: '08123456701', address: 'Jl. Merdeka No. 10, Jakarta' },
-    { name: 'CV Sinar Digital', category: 'Kabel Data', productBrand: 'Kabel Type-C', contactPerson: 'Budi Santoso', phone: '08123456702', address: 'Jl. Sudirman No. 45, Bandung' },
-    { name: 'UD Aksesoris Jaya', category: 'Pelindung Layar', productBrand: 'Tempered Glass', contactPerson: 'Citra Dewi', phone: '08123456703', address: 'Jl. Ahmad Yani No. 22, Surabaya' },
-    { name: 'PT Mega Elektronik', category: 'Audio', productBrand: 'Earphone', contactPerson: 'Dian Pratama', phone: '08123456704', address: 'Jl. Gatot Subroto No. 88, Jakarta' },
-    { name: 'CV Berkah Logistik', category: 'Powerbank', productBrand: 'Powerbank 10000mAh', contactPerson: 'Eko Nugroho', phone: '08123456705', address: 'Jl. Pahlawan No. 15, Semarang' },
-    { name: 'PT Kualitas Prima', category: 'Case', productBrand: 'Softcase', contactPerson: 'Fitri Handayani', phone: '08123456706', address: 'Jl. Diponegoro No. 33, Yogyakarta' },
-    { name: 'CV Tech Supply', category: 'Holder', productBrand: 'Holder Kendaraan', contactPerson: 'Gunawan Hidayat', phone: '08123456707', address: 'Jl. Veteran No. 7, Malang' },
-    { name: 'UD Bahan Baku Utama', category: 'Kabel Data', productBrand: 'Kabel Lightning', contactPerson: 'Hendra Kusuma', phone: '08123456708', address: 'Jl. Raya Industri No. 50, Bekasi' },
-    { name: 'PT Distribusi Nusantara', category: 'Charger', productBrand: 'Charger Wireless', contactPerson: 'Indah Lestari', phone: '08123456709', address: 'Jl. Pelabuhan No. 12, Makassar' },
-    { name: 'CV Aksesoris Official', category: 'Audio', productBrand: 'Headset Bluetooth', contactPerson: 'Joko Susilo', phone: '08123456710', address: 'Jl. Thamrin No. 28, Medan' },
-    { name: 'PT Prima Aksesori', category: 'Pelindung Layar', productBrand: 'Anti Gores', contactPerson: 'Kartika Sari', phone: '08123456711', address: 'Jl. Asia Afrika No. 5, Bandung' },
-    { name: 'CV Distributor Aksesori', category: 'Case', productBrand: 'Hardcase', contactPerson: 'Lukman Hakim', phone: '08123456712', address: 'Jl. Pemuda No. 18, Surabaya' },
-    { name: 'UD Aksesori Murah', category: 'Holder', productBrand: 'Ring Holder', contactPerson: 'Maya Anggraini', phone: '08123456713', address: 'Jl. Pendidikan No. 9, Depok' },
-    { name: 'PT Advance Aksesori', category: 'Powerbank', productBrand: 'Powerbank 20000mAh', contactPerson: 'Nanda Putra', phone: '08123456714', address: 'Jl. Teknologi No. 3, Tangerang' },
-    { name: 'CV Polytron Aksesori', category: 'Kabel Data', productBrand: 'Kabel Micro USB', contactPerson: 'Olivia Tan', phone: '08123456715', address: 'Jl. Industri No. 66, Batam' },
+    { name: 'PT Teknologi Maju', category: 'Charger', productBrand: 'Baseus', contactPerson: 'Andi Wijaya', phone: '08123456701', address: 'Jl. Merdeka No. 10, Jakarta' },
+    { name: 'CV Sinar Digital', category: 'Kabel Data', productBrand: 'Ugreen', contactPerson: 'Budi Santoso', phone: '08123456702', address: 'Jl. Sudirman No. 45, Bandung' },
+    { name: 'UD Aksesoris Jaya', category: 'Pelindung Layar', productBrand: 'Mocolo', contactPerson: 'Citra Dewi', phone: '08123456703', address: 'Jl. Ahmad Yani No. 22, Surabaya' },
+    { name: 'PT Mega Elektronik', category: 'Audio', productBrand: 'Soundcore', contactPerson: 'Dian Pratama', phone: '08123456704', address: 'Jl. Gatot Subroto No. 88, Jakarta' },
+    { name: 'CV Berkah Logistik', category: 'Powerbank', productBrand: 'Vivan', contactPerson: 'Eko Nugroho', phone: '08123456705', address: 'Jl. Pahlawan No. 15, Semarang' },
+    { name: 'PT Kualitas Prima', category: 'Case', productBrand: 'Nillkin', contactPerson: 'Fitri Handayani', phone: '08123456706', address: 'Jl. Diponegoro No. 33, Yogyakarta' },
+    { name: 'CV Tech Supply', category: 'Holder', productBrand: 'Robot', contactPerson: 'Gunawan Hidayat', phone: '08123456707', address: 'Jl. Veteran No. 7, Malang' },
+    { name: 'UD Bahan Baku Utama', category: 'Kabel Data', productBrand: 'Baseus', contactPerson: 'Hendra Kusuma', phone: '08123456708', address: 'Jl. Raya Industri No. 50, Bekasi' },
+    { name: 'PT Distribusi Nusantara', category: 'Charger', productBrand: 'Anker', contactPerson: 'Indah Lestari', phone: '08123456709', address: 'Jl. Pelabuhan No. 12, Makassar' },
+    { name: 'CV Aksesoris Official', category: 'Audio', productBrand: 'JBL', contactPerson: 'Joko Susilo', phone: '08123456710', address: 'Jl. Thamrin No. 28, Medan' },
+    { name: 'PT Prima Aksesori', category: 'Pelindung Layar', productBrand: 'Spigen', contactPerson: 'Kartika Sari', phone: '08123456711', address: 'Jl. Asia Afrika No. 5, Bandung' },
+    { name: 'CV Distributor Aksesori', category: 'Case', productBrand: 'Spigen', contactPerson: 'Lukman Hakim', phone: '08123456712', address: 'Jl. Pemuda No. 18, Surabaya' },
+    { name: 'UD Aksesori Murah', category: 'Holder', productBrand: 'Oraimo', contactPerson: 'Maya Anggraini', phone: '08123456713', address: 'Jl. Pendidikan No. 9, Depok' },
+    { name: 'PT Advance Aksesori', category: 'Powerbank', productBrand: 'Anker', contactPerson: 'Nanda Putra', phone: '08123456714', address: 'Jl. Teknologi No. 3, Tangerang' },
+    { name: 'CV Polytron Aksesori', category: 'Kabel Data', productBrand: 'Robot', contactPerson: 'Olivia Tan', phone: '08123456715', address: 'Jl. Industri No. 66, Batam' },
   ];
 
   const suppliers = await Promise.all(

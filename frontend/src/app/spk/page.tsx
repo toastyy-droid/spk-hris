@@ -76,6 +76,7 @@ export default function SupplierEvaluationPage() {
   const [actionId, setActionId] = useState<number | null>(null)
   const [threshold, setThreshold] = useState("0.75")
   const [categoryFilter, setCategoryFilter] = useState("")
+  const [brandFilter, setBrandFilter] = useState("")
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
 
@@ -130,13 +131,13 @@ export default function SupplierEvaluationPage() {
       const data = await api.post<{ threshold: number; suppliers: SupplierResult[] }>("/spk/supplier-selection", {
         threshold: thresholdValue,
         category: categoryFilter.trim() || undefined,
-        productBrand: undefined,
+        productBrand: brandFilter.trim() || undefined,
       })
       setResults(data.suppliers ?? [])
       const recommended = data.suppliers.filter((supplier) => supplier.recommended).length
       setMessage(`Perhitungan SAW selesai: ${data.suppliers.length} supplier dinilai, ${recommended} direkomendasikan.`)
       pushNotification("Evaluasi Supplier", `Perhitungan SAW selesai dengan threshold ${data.threshold}`)
-      await loadSuppliers(categoryFilter, "", false)
+      await loadSuppliers(categoryFilter, brandFilter, false)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Gagal menjalankan evaluasi supplier.")
     } finally {
@@ -163,6 +164,7 @@ export default function SupplierEvaluationPage() {
   const bestSupplier = results[0]
   const recommendedCount = results.filter((supplier) => supplier.recommended).length
   const categoryOptions = Array.from(new Set(allSuppliers.map((supplier) => supplier.category))).sort()
+  const brandOptions = Array.from(new Set(allSuppliers.map((supplier) => supplier.productBrand).filter((brand): brand is string => !!brand))).sort()
   const averageScore = suppliers.length > 0
     ? suppliers.reduce((total, supplier) => total + toNumber(supplier.totalScore), 0) / suppliers.length
     : 0
@@ -210,7 +212,7 @@ export default function SupplierEvaluationPage() {
       <Card>
         <CardHeader><CardTitle>Proses Evaluasi (Metode SAW)</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-[1fr_160px_auto_auto] md:items-end">
+          <div className="grid gap-3 md:grid-cols-[1fr_1fr_160px_auto_auto] md:items-end">
             <div className="space-y-2">
               <Label htmlFor="categoryFilter">Jenis Aksesoris HP</Label>
               <Select value={categoryFilter || "ALL"} onValueChange={(value) => setCategoryFilter(value === "ALL" ? "" : value)}>
@@ -224,10 +226,22 @@ export default function SupplierEvaluationPage() {
               </Select>
             </div>
             <div className="space-y-2">
+              <Label htmlFor="brandFilter">Brand Produk</Label>
+              <Select value={brandFilter || "ALL"} onValueChange={(value) => setBrandFilter(value === "ALL" ? "" : value)}>
+                <SelectTrigger id="brandFilter"><SelectValue placeholder="Pilih brand produk" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ALL">Semua Brand</SelectItem>
+                  {brandOptions.map((brand) => (
+                    <SelectItem key={brand} value={brand}>{brand}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="threshold">Threshold (0-1)</Label>
               <Input id="threshold" type="number" min="0.1" max="1" step="0.05" value={threshold} onChange={(event) => setThreshold(event.target.value)} />
             </div>
-            <Button variant="outline" onClick={() => loadSuppliers(categoryFilter, "")} disabled={loading}>
+            <Button variant="outline" onClick={() => loadSuppliers(categoryFilter, brandFilter)} disabled={loading}>
               <RefreshCw className="mr-2 h-4 w-4" /> Muat Data
             </Button>
             <Button onClick={runSelection} disabled={running || allSuppliers.length === 0}>
@@ -267,6 +281,7 @@ export default function SupplierEvaluationPage() {
                     <TableHead>#</TableHead>
                     <TableHead>Supplier</TableHead>
                     <TableHead>Jenis</TableHead>
+                    <TableHead>Brand</TableHead>
                     <TableHead>Harga</TableHead>
                     <TableHead>Kualitas</TableHead>
                     <TableHead>Pengiriman</TableHead>
@@ -287,6 +302,7 @@ export default function SupplierEvaluationPage() {
                         <div className="text-xs text-muted-foreground">{supplier.contactPerson || supplier.phone || "-"}</div>
                       </TableCell>
                       <TableCell>{supplier.category}</TableCell>
+                      <TableCell>{supplier.productBrand || "-"}</TableCell>
                       <TableCell>{formatScore(supplier.priceScore, 1)}</TableCell>
                       <TableCell>{formatScore(supplier.qualityScore, 1)}</TableCell>
                       <TableCell>{formatScore(supplier.deliveryScore, 1)}</TableCell>
