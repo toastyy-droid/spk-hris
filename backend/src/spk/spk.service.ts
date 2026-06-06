@@ -11,6 +11,10 @@ export class SpkService {
   private readonly COST_CRITERIA = ['price'];
   private readonly BENEFIT_CRITERIA = ['quality', 'delivery', 'service', 'capacity'];
 
+  private round4(value: number) {
+    return Math.round(value * 10000) / 10000;
+  }
+
   private sawNormalizeAndScore(
     raw: { price: number; quality: number; delivery: number; service: number; capacity: number },
     minPrice: number,
@@ -26,11 +30,11 @@ export class SpkService {
     };
 
     let total =
-      normalized.price * this.WEIGHTS.price +
-      normalized.quality * this.WEIGHTS.quality +
-      normalized.delivery * this.WEIGHTS.delivery +
-      normalized.service * this.WEIGHTS.service +
-      normalized.capacity * this.WEIGHTS.capacity;
+      this.round4(normalized.price * this.WEIGHTS.price) +
+      this.round4(normalized.quality * this.WEIGHTS.quality) +
+      this.round4(normalized.delivery * this.WEIGHTS.delivery) +
+      this.round4(normalized.service * this.WEIGHTS.service) +
+      this.round4(normalized.capacity * this.WEIGHTS.capacity);
 
     if (hasBonus) {
       total += 0.05;
@@ -38,7 +42,7 @@ export class SpkService {
 
     return {
       normalized,
-      total: Math.round(total * 10000) / 10000,
+      total: this.round4(total),
       bonus: hasBonus ? 0.05 : 0,
     };
   }
