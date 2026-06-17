@@ -8,13 +8,8 @@ import type { NestExpressApplication } from '@nestjs/platform-express';
 export async function createApp() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix('api');
-  const allowedOrigins = new Set([
-    ...(process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : []),
-    'https://hris-amm.vercel.app',
-    'https://hris-amm-frontend.vercel.app',
-  ]);
   app.enableCors({
-    origin: Array.from(allowedOrigins),
+    origin: true,
     credentials: true,
   });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
