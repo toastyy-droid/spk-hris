@@ -1,9 +1,6 @@
 function getApiUrl() {
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-    if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
-      return process.env.NEXT_PUBLIC_API_URL;
-    }
-    return 'https://spk-hris-backend.vercel.app/api';
+    return '/api';
   }
   if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
   return 'http://localhost:4000/api';
