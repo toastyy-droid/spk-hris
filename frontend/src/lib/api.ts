@@ -1,4 +1,15 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+function getApiUrl() {
+  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+    if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) {
+      return process.env.NEXT_PUBLIC_API_URL;
+    }
+    return 'https://spk-hris-backend.vercel.app/api';
+  }
+  if (process.env.NEXT_PUBLIC_API_URL) return process.env.NEXT_PUBLIC_API_URL;
+  return 'http://localhost:4000/api';
+}
+
+const API_URL = getApiUrl();
 const TIMEOUT_MS = 45000;
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 
